@@ -54,6 +54,11 @@
     align-items: center;
     justify-content: center;
   }
+  .boton-pan.activo {
+    background: #d9b56a;
+    color: #1a1a1a;
+    border-color: #d9b56a;
+  }
   .mesa-contenedor {
     position: absolute;
     top: 50px;
@@ -146,6 +151,7 @@
 
   <div class="barra-zoom">
     <button class="boton-pan" id="boton-musica" title="Música">🔇</button>
+    <button class="boton-pan" id="boton-pan-camara" title="Mover vista">✥</button>
     <label for="zoom">Zoom</label>
     <input type="range" id="zoom" min="50" max="100" value="100">
     <span id="zoom-valor">100%</span>
@@ -197,6 +203,7 @@
   const zoomInput = document.getElementById('zoom');
   const zoomValor = document.getElementById('zoom-valor');
   const estadoConexion = document.getElementById('estado-conexion');
+  const botonPanCamara = document.getElementById('boton-pan-camara');
 
   const MESA_ANCHO = 2000;
   const MESA_ALTO = 1500;
@@ -205,6 +212,7 @@
   let panX = 0, panY = 0;
   let escalaActual = 1;
   let centrado = false;
+  let modoPan = false;
 
   let arrastrandoCarta = false;
   let offsetX = 0, offsetY = 0;
@@ -328,6 +336,7 @@
 
   carta.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
+    if (modoPan) return;
     e.preventDefault();
     iniciarArrastreCarta(e.clientX, e.clientY);
   });
@@ -338,13 +347,20 @@
   }, { passive: true });
 
   mesaContenedor.addEventListener('mousedown', (e) => {
-    if (e.button !== 2) return;
-    e.preventDefault();
-    arrastrandoVista = true;
-    seMovioVista = false;
-    panInicioX = e.clientX - panX;
-    panInicioY = e.clientY - panY;
-    mesaContenedor.style.cursor = 'grabbing';
+    if (e.button === 2 || (modoPan && e.button === 0)) {
+      e.preventDefault();
+      arrastrandoVista = true;
+      seMovioVista = false;
+      panInicioX = e.clientX - panX;
+      panInicioY = e.clientY - panY;
+      mesaContenedor.style.cursor = 'grabbing';
+    }
+  });
+
+  botonPanCamara.addEventListener('click', () => {
+    modoPan = !modoPan;
+    botonPanCamara.classList.toggle('activo', modoPan);
+    mesaContenedor.style.cursor = modoPan ? 'grab' : 'default';
   });
 
   window.addEventListener('mousemove', (e) => {
@@ -368,7 +384,7 @@
     terminarArrastreCarta();
     if (arrastrandoVista) {
       arrastrandoVista = false;
-      mesaContenedor.style.cursor = 'default';
+      mesaContenedor.style.cursor = modoPan ? 'grab' : 'default';
     }
   });
 
