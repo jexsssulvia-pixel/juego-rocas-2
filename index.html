@@ -334,6 +334,21 @@
     carta.style.transition = 'transform 0.3s ease';
   }
 
+  function iniciarArrastreVista(clientX, clientY) {
+    arrastrandoVista = true;
+    seMovioVista = false;
+    panInicioX = clientX - panX;
+    panInicioY = clientY - panY;
+    mesaContenedor.style.cursor = 'grabbing';
+  }
+
+  function moverVista(clientX, clientY) {
+    seMovioVista = true;
+    panX = clientX - panInicioX;
+    panY = clientY - panInicioY;
+    actualizarTransformMesa();
+  }
+
   carta.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
     if (modoPan) return;
@@ -342,6 +357,7 @@
   });
 
   carta.addEventListener('touchstart', (e) => {
+    if (modoPan) return;
     const t = e.touches[0];
     iniciarArrastreCarta(t.clientX, t.clientY);
   }, { passive: true });
@@ -349,13 +365,15 @@
   mesaContenedor.addEventListener('mousedown', (e) => {
     if (e.button === 2 || (modoPan && e.button === 0)) {
       e.preventDefault();
-      arrastrandoVista = true;
-      seMovioVista = false;
-      panInicioX = e.clientX - panX;
-      panInicioY = e.clientY - panY;
-      mesaContenedor.style.cursor = 'grabbing';
+      iniciarArrastreVista(e.clientX, e.clientY);
     }
   });
+
+  mesaContenedor.addEventListener('touchstart', (e) => {
+    if (!modoPan) return;
+    const t = e.touches[0];
+    iniciarArrastreVista(t.clientX, t.clientY);
+  }, { passive: true });
 
   botonPanCamara.addEventListener('click', () => {
     modoPan = !modoPan;
@@ -367,17 +385,17 @@
     if (arrastrandoCarta) {
       moverCarta(e.clientX, e.clientY);
     } else if (arrastrandoVista) {
-      seMovioVista = true;
-      panX = e.clientX - panInicioX;
-      panY = e.clientY - panInicioY;
-      actualizarTransformMesa();
+      moverVista(e.clientX, e.clientY);
     }
   });
 
   window.addEventListener('touchmove', (e) => {
-    if (!arrastrandoCarta) return;
     const t = e.touches[0];
-    moverCarta(t.clientX, t.clientY);
+    if (arrastrandoCarta) {
+      moverCarta(t.clientX, t.clientY);
+    } else if (arrastrandoVista) {
+      moverVista(t.clientX, t.clientY);
+    }
   }, { passive: true });
 
   window.addEventListener('mouseup', () => {
@@ -390,6 +408,9 @@
 
   window.addEventListener('touchend', () => {
     terminarArrastreCarta();
+    if (arrastrandoVista) {
+      arrastrandoVista = false;
+    }
   });
 
   mesaContenedor.addEventListener('wheel', (e) => {
