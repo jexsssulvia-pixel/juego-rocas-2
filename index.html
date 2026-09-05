@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego de Rocas Multijugador</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+  body {
+    margin: 0;
+    background: #1a1a1a;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+  .barra-zoom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 100;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .barra-zoom label {
+    color: #f4f1ea;
+    font-size: 14px;
+  }
+  .barra-zoom input[type="range"] {
+    width: 150px;
+  }
+  .barra-zoom span {
+    color: #f4f1ea;
+    font-size: 13px;
+    min-width: 45px;
+  }
+  .boton-pan {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    background: #333;
+    border: 1px solid #555;
+    color: #f4f1ea;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mesa-contenedor {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    background: #1a1a1a;
+    touch-action: none;
+  }
+  .mesa {
+    position: absolute;
+    width: 2000px;
+    height: 1500px;
+    background: #2e5c3e;
+    transform-origin: 0 0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 40px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 40px);
+  }
+  .carta {
+    width: 220px;
+    height: 300px;
+    position: absolute;
+    left: 890px;
+    top: 600px;
+    cursor: grab;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+    user-select: none;
+  }
+  .cara {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    pointer-events: none;
+  }
+  .cara img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+    pointer-events: none;
+  }
+  .cara-reverso {
+    transform: rotateY(180deg);
+  }
+  .menu-contextual {
+    position: absolute;
+    display: none;
+    background: #f4f1ea;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    padding: 4px;
+    z-index: 10;
+    min-width: 130px;
+  }
+  .opcion-menu {
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #1a1a1a;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .opcion-menu:hover {
+    background: #e0dcd0;
+  }
+  .estado-conexion {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.6);
+    color: #f4f1ea;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+  <audio id="musica-fondo" loop>
+    <source src="musica/fondo.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="barra-zoom">
+    <button class="boton-pan" id="boton-musica" title="Música">🔇</button>
+    <label for="zoom">Zoom</label>
+    <input type="range" id="zoom" min="50" max="100" value="100">
+    <span id="zoom-valor">100%</span>
+  </div>
+
+  <div class="mesa-contenedor" id="mesa-contenedor">
+    <div class="mesa" id="mesa">
+
+      <div class="carta" id="carta">
+        <div class="cara cara-frontal">
+          <img src="imagenes/granito.png" alt="Carta de granito" draggable="false">
+        </div>
+        <div class="cara cara-reverso">
+          <img src="imagenes/reversa_ignea.png" alt="Reverso de la carta" draggable="false">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="menu-contextual" id="menu">
+    <div class="opcion-menu" data-accion="desplazar">Desplazar</div>
+    <div class="opcion-menu" data-accion="rotar">Rotar</div>
+    <div class="opcion-menu" data-accion="reversa">Reversa</div>
+  </div>
+
+  <div class="estado-conexion" id="estado-conexion">Conectando...</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAP8Slqy2rHs21VG4UAKjUtxm_U447U8vs",
+    authDomain: "juego-de-rocas.firebaseapp.com",
+    databaseURL: "https://juego-de-rocas-default-rtdb.firebaseio.com",
+    projectId: "juego-de-rocas",
+    storageBucket: "juego-de-rocas.firebasestorage.app",
+    messagingSenderId: "229026823251",
+    appId: "1:229026823251:web:763bbd486b0ece44c11aa6"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const refCarta = db.ref('carta1');
+
+  const carta = document.getElementById('carta');
+  const menu = document.getElementById('menu');
+  const opciones = document.querySelectorAll('.opcion-menu');
+  const mesa = document.getElementById('mesa');
+  const mesaContenedor = document.getElementById('mesa-contenedor');
+  const zoomInput = document.getElementById('zoom');
+  const zoomValor = document.getElementById('zoom-valor');
+  const estadoConexion = document.getElementById('estado-conexion');
+
+  const MESA_ANCHO = 2000;
+  const MESA_ALTO = 1500;
+  const HOLGURA = 300;
+
+  let panX = 0, panY = 0;
+  let escalaActual = 1;
+  let centrado = false;
+
+  let arrastrandoCarta = false;
+  let offsetX = 0, offsetY = 0;
+  let angulo = 0;
+  let volteada = false;
+
+  let arrastrandoVista = false;
+  let panInicioX = 0, panInicioY = 0;
+  let seMovioVista = false;
+
+  let actualizandoDesdeRemoto = false;
+
+  function centrarMesa() {
+    const contRect = mesaContenedor.getBoundingClientRect();
+    panX = (contRect.width - MESA_ANCHO * escalaActual) / 2;
+    panY = (contRect.height - MESA_ALTO * escalaActual) / 2;
+  }
+
+  function limitarPan() {
+    const contRect = mesaContenedor.getBoundingClientRect();
+    const mesaAnchoEscalado = MESA_ANCHO * escalaActual;
+    const mesaAltoEscalado = MESA_ALTO * escalaActual;
+
+    if (mesaAnchoEscalado <= contRect.width) {
+      const centroX = (contRect.width - mesaAnchoEscalado) / 2;
+      panX = Math.max(centroX - HOLGURA, Math.min(centroX + HOLGURA, panX));
+    } else {
+      const minX = contRect.width - mesaAnchoEscalado - HOLGURA;
+      const maxX = HOLGURA;
+      panX = Math.max(minX, Math.min(maxX, panX));
+    }
+
+    if (mesaAltoEscalado <= contRect.height) {
+      const centroY = (contRect.height - mesaAltoEscalado) / 2;
+      panY = Math.max(centroY - HOLGURA, Math.min(centroY + HOLGURA, panY));
+    } else {
+      const minY = contRect.height - mesaAltoEscalado - HOLGURA;
+      const maxY = HOLGURA;
+      panY = Math.max(minY, Math.min(maxY, panY));
+    }
+  }
+
+  function actualizarTransformCarta() {
+    carta.style.transform = 'rotate(' + angulo + 'deg) rotateY(' + (volteada ? 180 : 0) + 'deg)';
+  }
+
+  function actualizarTransformMesa() {
+    limitarPan();
+    mesa.style.transform = 'translate(' + panX + 'px, ' + panY + 'px) scale(' + escalaActual + ')';
+  }
+
+  function aplicarZoom(nuevoValor) {
+    nuevoValor = Math.max(50, Math.min(100, nuevoValor));
+    zoomInput.value = nuevoValor;
+    escalaActual = nuevoValor / 100;
+    zoomValor.textContent = Math.round(nuevoValor) + '%';
+    actualizarTransformMesa();
+  }
+
+  function enviarEstadoCarta() {
+    if (actualizandoDesdeRemoto) return;
+    refCarta.set({
+      left: parseFloat(carta.style.left),
+      top: parseFloat(carta.style.top),
+      angulo: angulo,
+      volteada: volteada
+    });
+  }
+
+  refCarta.on('value', (snapshot) => {
+    const datos = snapshot.val();
+    if (!datos) return;
+    actualizandoDesdeRemoto = true;
+    carta.style.left = datos.left + 'px';
+    carta.style.top = datos.top + 'px';
+    angulo = datos.angulo;
+    volteada = datos.volteada;
+    actualizarTransformCarta();
+    actualizandoDesdeRemoto = false;
+  });
+
+  db.ref('.info/connected').on('value', (snap) => {
+    if (snap.val() === true) {
+      estadoConexion.textContent = 'Conectado';
+      estadoConexion.style.background = 'rgba(20,120,60,0.8)';
+    } else {
+      estadoConexion.textContent = 'Sin conexión';
+      estadoConexion.style.background = 'rgba(150,30,30,0.8)';
+    }
+  });
+
+  if (!centrado) {
+    centrarMesa();
+    actualizarTransformMesa();
+    centrado = true;
+  }
+
+  function iniciarArrastreCarta(clientX, clientY) {
+    const rect = carta.getBoundingClientRect();
+    offsetX = (clientX - rect.left) / escalaActual;
+    offsetY = (clientY - rect.top) / escalaActual;
+    arrastrandoCarta = true;
+    carta.style.cursor = 'grabbing';
+    carta.style.transition = 'none';
+  }
+
+  function moverCarta(clientX, clientY) {
+    const mesaRect = mesa.getBoundingClientRect();
+    const x = (clientX - mesaRect.left) / escalaActual - offsetX;
+    const y = (clientY - mesaRect.top) / escalaActual - offsetY;
+    carta.style.left = x + 'px';
+    carta.style.top = y + 'px';
+    enviarEstadoCarta();
+  }
+
+  function terminarArrastreCarta() {
+    arrastrandoCarta = false;
+    carta.style.cursor = 'grab';
+    carta.style.transition = 'transform 0.3s ease';
+  }
+
+  carta.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    iniciarArrastreCarta(e.clientX, e.clientY);
+  });
+
+  carta.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    iniciarArrastreCarta(t.clientX, t.clientY);
+  }, { passive: true });
+
+  mesaContenedor.addEventListener('mousedown', (e) => {
+    if (e.button !== 2) return;
+    e.preventDefault();
+    arrastrandoVista = true;
+    seMovioVista = false;
+    panInicioX = e.clientX - panX;
+    panInicioY = e.clientY - panY;
+    mesaContenedor.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (arrastrandoCarta) {
+      moverCarta(e.clientX, e.clientY);
+    } else if (arrastrandoVista) {
+      seMovioVista = true;
+      panX = e.clientX - panInicioX;
+      panY = e.clientY - panInicioY;
+      actualizarTransformMesa();
+    }
+  });
+
+  window.addEventListener('touchmove', (e) => {
+    if (!arrastrandoCarta) return;
+    const t = e.touches[0];
+    moverCarta(t.clientX, t.clientY);
+  }, { passive: true });
+
+  window.addEventListener('mouseup', () => {
+    terminarArrastreCarta();
+    if (arrastrandoVista) {
+      arrastrandoVista = false;
+      mesaContenedor.style.cursor = 'default';
+    }
+  });
+
+  window.addEventListener('touchend', () => {
+    terminarArrastreCarta();
+  });
+
+  mesaContenedor.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const direccion = e.deltaY > 0 ? -5 : 5;
+    aplicarZoom(parseFloat(zoomInput.value) + direccion);
+  }, { passive: false });
+
+  carta.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (seMovioVista) return;
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+    menu.style.display = 'block';
+  });
+
+  mesaContenedor.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!menu.contains(e.target)) menu.style.display = 'none';
+  });
+
+  opciones.forEach(op => {
+    op.addEventListener('click', () => {
+      const accion = op.dataset.accion;
+      if (accion === 'rotar') {
+        angulo += 90;
+        actualizarTransformCarta();
+        enviarEstadoCarta();
+      } else if (accion === 'reversa') {
+        volteada = !volteada;
+        actualizarTransformCarta();
+        enviarEstadoCarta();
+      }
+      menu.style.display = 'none';
+    });
+  });
+
+  zoomInput.addEventListener('input', () => {
+    aplicarZoom(parseFloat(zoomInput.value));
+  });
+
+  window.addEventListener('resize', () => {
+    actualizarTransformMesa();
+  });
+
+  const musica = document.getElementById('musica-fondo');
+  const botonMusica = document.getElementById('boton-musica');
+  musica.volume = 0.4;
+  let sonando = false;
+
+  botonMusica.addEventListener('click', () => {
+    if (sonando) {
+      musica.pause();
+      botonMusica.textContent = '🔇';
+    } else {
+      musica.play();
+      botonMusica.textContent = '🔊';
+    }
+    sonando = !sonando;
+  });
+</script>
+
+</body>
+</html>
