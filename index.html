@@ -127,11 +127,9 @@
         cursor: pointer;
     }
     #panelLogin button:hover { background: #ffe44d; }
-    #panelLogin .linkSala {
-        margin-top: 14px;
-        font-size: 12px;
-        opacity: 0.8;
-        word-break: break-all;
+    #panelLogin p {
+        font-size: 13px;
+        opacity: 0.85;
     }
     #listaJugadores {
         position: absolute;
@@ -153,15 +151,9 @@
 <div id="panelLogin">
     <div class="caja">
         <h1>🧟 Zombie Maze</h1>
-        <div id="loginSalaExistente" style="display:none;">
-            <p>Te vas a unir a la sala: <b id="codigoSalaMostrado"></b></p>
-        </div>
-        <div id="loginSalaNueva" style="display:none;">
-            <p>Vas a crear una sala nueva</p>
-        </div>
+        <p style="opacity:0.8; font-size:13px;">Entra con tu nombre para unirte a la partida</p>
         <input type="text" id="inputNombre" placeholder="Tu nombre" maxlength="14">
         <button id="btnEntrar">Entrar a la partida</button>
-        <div class="linkSala" id="textoLinkSala"></div>
     </div>
 </div>
 
@@ -255,7 +247,7 @@ const COLORES_JUGADORES = [
 const MI_ID = 'jugador_' + Math.random().toString(36).substr(2, 9);
 let miNombre = '';
 let miColor = COLORES_JUGADORES[0];
-let codigoSala = '';
+const CODIGO_SALA_FIJO = 'principal'; // sala unica compartida: quien entra al link, entra aca
 let esHost = false; // el primer jugador en la sala simula zombies/spawns para evitar desincronizacion
 
 // ==================== LABERINTO: 10 HABITACIONES EN 2 FILAS DE 5 ====================
@@ -459,24 +451,9 @@ const keysDown = new Set();
 let refSala, refJugadores, refZombies, refPuertas, refCajasMun, refCajasRep, refEstado, refBullets;
 
 // ==================== LOGIN: leer sala de la URL o crear una nueva ====================
-function generarCodigoSala() {
-    return Math.random().toString(36).substr(2, 6).toUpperCase();
-}
-
 function inicializarLogin() {
-    const params = new URLSearchParams(window.location.search);
-    const salaUrl = params.get('sala');
-
-    if (salaUrl) {
-        codigoSala = salaUrl.toUpperCase();
-        document.getElementById('loginSalaExistente').style.display = 'block';
-        document.getElementById('codigoSalaMostrado').textContent = codigoSala;
-    } else {
-        codigoSala = generarCodigoSala();
-        document.getElementById('loginSalaNueva').style.display = 'block';
-        const link = window.location.origin + window.location.pathname + '?sala=' + codigoSala;
-        document.getElementById('textoLinkSala').textContent = 'Comparte este link con tus amigos: ' + link;
-    }
+    // No hace falta nada especial: todos entran a la misma sala fija.
+    document.getElementById('inputNombre').focus();
 }
 
 document.getElementById('btnEntrar').addEventListener('click', entrarAPartida);
@@ -497,17 +474,12 @@ function entrarAPartida() {
     document.getElementById('hud2').style.display = 'block';
     document.getElementById('wrapper').style.display = 'block';
 
-    // Actualiza la URL para que quede el codigo de sala (por si el usuario
-    // creo la sala y quiere copiar el link despues)
-    const nuevaUrl = window.location.origin + window.location.pathname + '?sala=' + codigoSala;
-    window.history.replaceState({}, '', nuevaUrl);
-
     conectarAFirebase();
 }
 
 // ==================== CONEXION A FIREBASE ====================
 function conectarAFirebase() {
-    refSala = db.ref('salas/' + codigoSala);
+    refSala = db.ref('salas/' + CODIGO_SALA_FIJO);
     refJugadores = refSala.child('jugadores');
     refZombies = refSala.child('zombies');
     refPuertas = refSala.child('puertas');
@@ -518,12 +490,20 @@ function conectarAFirebase() {
 
     // Decide quien es el host: el primero en escribir su timestamp de union gana.
     // Usamos una transaccion sobre estado/hostId para evitar carreras entre
-    // 2 jugadores que entran casi al mismo tiempo.
-    refEstado.child('hostId').transaction((actual) => {
-        if (actual === null) return MI_ID; // nadie es host todavia, me postulo
-        return actual; // ya hay host, no lo piso
+    // 2 jugadores que entran casi al mismo tiempo. Si la partida anterior
+    // ya termino (juegoTerminado), cualquiera puede tomar el puesto de host
+    // de nuevo para arrancar una partida fresca.
+    refEstado.transaction((actual) => {
+        if (actual === null) {
+            return { hostId: MI_ID, juegoTerminado: false }; // sala nueva, me postulo
+        }
+        if (actual.juegoTerminado) {
+            return { ...actual, hostId: MI_ID }; // partida anterior termino, tomo el puesto
+        }
+        return actual; // partida en curso con host activo, no lo piso
     }, (error, comprometido, snapshot) => {
-        esHost = snapshot.val() === MI_ID;
+        const datos = snapshot.val() || {};
+        esHost = datos.hostId === MI_ID;
 
         if (esHost) {
             inicializarEstadoDeSalaComoHost();
@@ -558,25 +538,67 @@ function conectarAFirebase() {
             // Si el jugador se desconecta (cierra pestaña), lo removemos de la sala
             refJugadores.child(MI_ID).onDisconnect().remove();
             if (esHost) {
-                // Si el host se va, liberamos el puesto para que otro lo tome
-                refEstado.child('hostId').onDisconnect().remove();
+                // Si el host se va, liberamos el puesto (pero sin borrar el
+                // resto del estado) para que otro jugador conectado lo retome.
+                refEstado.child('hostId').onDisconnect().set(null);
             }
 
             cajasMunicion = POSICIONES_MUNICION.map((p, i) => ({ ...p, id: 'm' + i, recogida: false }));
             cajasReparacion = ESQUINAS_REPARACION.map((p, i) => ({ x: p[0], y: p[1], id: 'r' + i, reparada: false }));
 
+            vigilarHostAusente();
             iniciarGameLoop();
+        });
+    });
+}
+
+// Vigila continuamente si el host desaparece (se desconecto) mientras la
+// partida sigue en curso, y toma el puesto automaticamente para que los
+// zombies no se queden congelados sin nadie simulandolos.
+function vigilarHostAusente() {
+    refEstado.child('hostId').on('value', (snap) => {
+        const hostActual = snap.val();
+        if (hostActual === MI_ID) {
+            esHost = true;
+            return;
+        }
+        if (hostActual !== null) {
+            esHost = false;
+            return;
+        }
+        // hostId quedo en null: el host se fue. Nos postulamos con una
+        // transaccion para evitar que 2 jugadores se autodeclaren host a la vez.
+        if (gameOver || victory) return;
+
+        refEstado.child('hostId').transaction((actual) => {
+            if (actual === null) return MI_ID;
+            return actual;
+        }, (error, comprometido, snapshot2) => {
+            esHost = snapshot2.val() === MI_ID;
+            if (esHost) {
+                refEstado.child('hostId').onDisconnect().set(null);
+            }
         });
     });
 }
 
 function inicializarEstadoDeSalaComoHost() {
     refEstado.once('value', (snap) => {
-        if (snap.val() && snap.val().tiempoInicio) return; // la sala ya estaba inicializada
+        const estadoActual = snap.val();
 
-        refEstado.update({
+        // Si la sala nunca se inicializo, O si la partida anterior ya
+        // termino (juegoTerminado) y este es el primer jugador entrando
+        // de nuevo, reiniciamos todo desde cero para una partida nueva.
+        const necesitaReset = !estadoActual || !estadoActual.tiempoInicio || estadoActual.juegoTerminado;
+        if (!necesitaReset) return; // la sala ya esta en curso, no tocar nada
+
+        refEstado.set({
+            hostId: MI_ID,
             tiempoInicio: firebase.database.ServerValue.TIMESTAMP,
-            ultimoSpawn: firebase.database.ServerValue.TIMESTAMP
+            ultimoSpawn: firebase.database.ServerValue.TIMESTAMP,
+            juegoTerminado: false,
+            resultado: null,
+            mensajeResultado: null
         });
 
         // El host crea el estado inicial de zombies, puertas y cajas para toda la sala
@@ -610,6 +632,8 @@ function inicializarEstadoDeSalaComoHost() {
             cajasRepIniciales['r' + i] = { x: p[0], y: p[1], reparada: false, reparandoPor: null, progresoDesde: null };
         });
         refCajasRep.set(cajasRepIniciales);
+
+        refBullets.remove(); // limpia balas viejas de la partida anterior
     });
 }
 
@@ -1282,7 +1306,7 @@ function mostrarOverlay(titulo, subtitulo, color) {
     const s = document.getElementById('overlaySubtitle');
     t.textContent = titulo;
     t.style.color = color;
-    s.textContent = subtitulo + ' — Recarga la página para jugar de nuevo';
+    s.textContent = subtitulo + ' — La sala se reinicia para la próxima partida';
     overlay.style.display = 'flex';
 }
 
