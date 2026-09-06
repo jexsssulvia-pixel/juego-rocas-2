@@ -3,477 +3,722 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Juego de Rocas Multijugador</title>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<title>Cuadrito Saltarin</title>
 <style>
   body {
     margin: 0;
-    background: #1a1a1a;
+    background: #1a1a2e;
     height: 100vh;
     font-family: Arial, sans-serif;
     overflow: hidden;
-    position: relative;
-  }
-  .barra-zoom {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50px;
-    background: #1a1a1a;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 16px;
-    z-index: 100;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   }
-  .barra-zoom label {
+  #panel-accion {
+    width: 160px;
+    height: 500px;
+    background: #16213e;
+    border: 2px solid #444;
+    border-radius: 6px;
+    padding: 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  #panel-accion h3 {
     color: #f4f1ea;
     font-size: 14px;
+    margin: 0 0 12px 0;
+    text-align: center;
   }
-  .barra-zoom input[type="range"] {
-    width: 150px;
-  }
-  .barra-zoom span {
+  #boton-cancelar-panel {
+    display: none;
+    background: #b23a48;
     color: #f4f1ea;
-    font-size: 13px;
-    min-width: 45px;
-  }
-  .boton-pan {
-    width: 34px;
-    height: 34px;
+    border: 1px solid #7a1f30;
     border-radius: 6px;
-    background: #333;
-    border: 1px solid #555;
-    color: #f4f1ea;
-    font-size: 16px;
+    padding: 12px 10px;
+    font-size: 13px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
   }
-  .boton-pan.activo {
-    background: #d9b56a;
-    color: #1a1a1a;
-    border-color: #d9b56a;
+  #boton-cancelar-panel:hover {
+    background: #d14a5a;
   }
-  .mesa-contenedor {
-    position: absolute;
-    top: 50px;
-    left: 0;
-    right: 0;
-    bottom: 0;
+  #boton-cancelar-panel.visible {
+    display: block;
+  }
+  #escenario {
+    position: relative;
+    width: 900px;
+    height: 500px;
+    background: #87ceeb;
+    border: 2px solid #444;
     overflow: hidden;
-    background: #1a1a1a;
-    touch-action: none;
+    transition: background 2s ease;
   }
-  .mesa {
+  #escenario.dia { background: #87ceeb; }
+  #escenario.tarde { background: #e8a87c; }
+  #escenario.noche { background: #0d1b2a; }
+  #camara {
     position: absolute;
-    width: 2000px;
-    height: 1500px;
-    background: #2e5c3e;
-    transform-origin: 0 0;
-    background-image:
-      repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 40px),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 40px);
-  }
-  .carta {
-    width: 220px;
-    height: 300px;
-    position: absolute;
-    left: 890px;
-    top: 600px;
-    cursor: grab;
-    transform-style: preserve-3d;
-    transition: transform 0.3s ease;
-    user-select: none;
-  }
-  .cara {
-    position: absolute;
-    inset: 0;
-    backface-visibility: hidden;
-    pointer-events: none;
-  }
-  .cara img {
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-    display: block;
-    -webkit-user-drag: none;
-    user-select: none;
-    pointer-events: none;
+    transform-origin: 0 0;
   }
-  .cara-reverso {
-    transform: rotateY(180deg);
+  .bloque {
+    position: absolute;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
   }
-  .menu-contextual {
+  .bloque:hover {
+    outline: 2px solid #f5c518;
+    outline-offset: -2px;
+  }
+  #jugador {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: #e94560;
+    border-radius: 4px;
+    z-index: 10;
+  }
+  #instrucciones {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #f4f1ea;
+    font-size: 12px;
+    text-align: center;
+    z-index: 60;
+  }
+  .menu-bloque {
     position: absolute;
     display: none;
     background: #f4f1ea;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     padding: 4px;
-    z-index: 10;
-    min-width: 130px;
+    z-index: 50;
+    min-width: 140px;
   }
-  .opcion-menu {
+  .opcion-bloque {
     padding: 8px 12px;
-    font-size: 14px;
+    font-size: 13px;
     color: #1a1a1a;
     border-radius: 5px;
     cursor: pointer;
   }
-  .opcion-menu:hover {
+  .opcion-bloque:hover {
     background: #e0dcd0;
   }
-  .estado-conexion {
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    background: rgba(0,0,0,0.6);
-    color: #f4f1ea;
-    padding: 6px 12px;
+  .barra-progreso-cont {
+    position: absolute;
+    width: 40px;
+    height: 6px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 3px;
+    z-index: 40;
+    overflow: hidden;
+  }
+  .barra-progreso-relleno {
+    height: 100%;
+    width: 0%;
+    background: #4caf50;
+  }
+  #inventario {
+    width: 160px;
+    height: 500px;
+    background: #16213e;
+    border: 2px solid #444;
     border-radius: 6px;
-    font-size: 12px;
-    z-index: 100;
+    padding: 12px;
+    box-sizing: border-box;
+  }
+  #inventario h3 {
+    color: #f4f1ea;
+    font-size: 14px;
+    margin: 0 0 12px 0;
+    text-align: center;
+  }
+  .slot-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #0f3460;
+    border: 1px solid #533483;
+    border-radius: 6px;
+    padding: 6px;
+    margin-bottom: 8px;
+  }
+  .slot-item img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+  }
+  .slot-item .cantidad {
+    color: #f4f1ea;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  #barra-salud {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    gap: 3px;
+    z-index: 60;
+  }
+  .corazon {
+    width: 18px;
+    height: 18px;
+    background: #e94560;
+    border: 1px solid #7a1f30;
+    border-radius: 3px;
+  }
+  .corazon.vacio {
+    background: #3a2a2a;
+  }
+  #reloj {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.5);
+    color: #f4f1ea;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    z-index: 60;
   }
 </style>
 </head>
 <body>
 
-  <audio id="musica-fondo" loop>
-    <source src="musica/fondo.mp3" type="audio/mpeg">
-  </audio>
+<div id="instrucciones">W A S D mover, Espacio saltar, Ctrl correr, flechas arriba/abajo mover camara, clic derecho para retirar bloque</div>
 
-  <div class="barra-zoom">
-    <button class="boton-pan" id="boton-musica" title="Música">🔇</button>
-    <button class="boton-pan" id="boton-pan-camara" title="Mover vista">✥</button>
-    <label for="zoom">Zoom</label>
-    <input type="range" id="zoom" min="50" max="100" value="100">
-    <span id="zoom-valor">100%</span>
+<div id="panel-accion">
+  <h3>Accion</h3>
+  <div id="boton-cancelar-panel">Cancelar operacion</div>
+</div>
+
+<div id="escenario" class="dia">
+  <div id="camara">
+    <div id="contenedor-capas"></div>
+    <div id="jugador"></div>
   </div>
+  <div id="barra-salud"></div>
+  <div id="reloj">06:00</div>
+</div>
 
-  <div class="mesa-contenedor" id="mesa-contenedor">
-    <div class="mesa" id="mesa">
+<div id="inventario">
+  <h3>Inventario</h3>
+  <div id="lista-inventario"></div>
+</div>
 
-      <div class="carta" id="carta">
-        <div class="cara cara-frontal">
-          <img src="imagenes/granito.png" alt="Carta de granito" draggable="false">
-        </div>
-        <div class="cara cara-reverso">
-          <img src="imagenes/reversa_ignea.png" alt="Reverso de la carta" draggable="false">
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <div class="menu-contextual" id="menu">
-    <div class="opcion-menu" data-accion="desplazar">Desplazar</div>
-    <div class="opcion-menu" data-accion="rotar">Rotar</div>
-    <div class="opcion-menu" data-accion="reversa">Reversa</div>
-  </div>
-
-  <div class="estado-conexion" id="estado-conexion">Conectando...</div>
+<div class="menu-bloque" id="menu-bloque">
+  <div class="opcion-bloque" id="opcion-retirar-bloque">Retirar</div>
+</div>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAP8Slqy2rHs21VG4UAKjUtxm_U447U8vs",
-    authDomain: "juego-de-rocas.firebaseapp.com",
-    databaseURL: "https://juego-de-rocas-default-rtdb.firebaseio.com",
-    projectId: "juego-de-rocas",
-    storageBucket: "juego-de-rocas.firebasestorage.app",
-    messagingSenderId: "229026823251",
-    appId: "1:229026823251:web:763bbd486b0ece44c11aa6"
+  const jugador = document.getElementById('jugador');
+  const escenario = document.getElementById('escenario');
+  const camara = document.getElementById('camara');
+  const contenedorCapas = document.getElementById('contenedor-capas');
+  const menuBloque = document.getElementById('menu-bloque');
+  const opcionRetirarBloque = document.getElementById('opcion-retirar-bloque');
+  const listaInventario = document.getElementById('lista-inventario');
+  const barraSalud = document.getElementById('barra-salud');
+  const relojEl = document.getElementById('reloj');
+  const botonCancelarPanel = document.getElementById('boton-cancelar-panel');
+
+  const ANCHO_VISIBLE = 900;
+  const ALTO_ESCENARIO = 500;
+  const ALTO_CAPA = 40;
+  const ANCHO_BLOQUE = 60;
+  const NUM_CAPAS = 8;
+  const NUM_COLUMNAS = 50;
+  const ANCHO_MUNDO = ANCHO_BLOQUE * NUM_COLUMNAS;
+  const ALTO_TOTAL_CAPAS = ALTO_CAPA * NUM_CAPAS;
+  const TAMANO_JUGADOR = 40;
+  const VELOCIDAD_BASE = 4;
+  const MULTIPLICADOR_CORRER = 1.5;
+  const FUERZA_SALTO = 12;
+  const GRAVEDAD = 0.6;
+  const CANTIDAD_POR_BLOQUE = 3;
+  const VIDA_MAXIMA = 10;
+  const ALTURA_TRONCO = 4;
+  const SEPARACION_ARBOLES = 10;
+  const ZOOM_VISTA = 0.75;
+  const ALTURA_MAXIMA_VISTA_BLOQUES = 10;
+
+  const YPASTO = ALTO_ESCENARIO - ALTO_TOTAL_CAPAS;
+  const Y_TOPE_MUNDO = YPASTO - ALTO_CAPA * ALTURA_MAXIMA_VISTA_BLOQUES;
+  const Y_FONDO_MUNDO = ALTO_ESCENARIO;
+
+  const TIEMPOS_RETIRO = {
+    f1: 5000,
+    f4: 15000,
+    f5: 5000
   };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const refCarta = db.ref('carta1');
+  let vidaActual = VIDA_MAXIMA;
 
-  const carta = document.getElementById('carta');
-  const menu = document.getElementById('menu');
-  const opciones = document.querySelectorAll('.opcion-menu');
-  const mesa = document.getElementById('mesa');
-  const mesaContenedor = document.getElementById('mesa-contenedor');
-  const zoomInput = document.getElementById('zoom');
-  const zoomValor = document.getElementById('zoom-valor');
-  const estadoConexion = document.getElementById('estado-conexion');
-  const botonPanCamara = document.getElementById('boton-pan-camara');
+  function renderizarSalud() {
+    barraSalud.innerHTML = '';
+    for (let i = 0; i < VIDA_MAXIMA; i++) {
+      const corazon = document.createElement('div');
+      corazon.className = 'corazon' + (i < vidaActual ? '' : ' vacio');
+      barraSalud.appendChild(corazon);
+    }
+  }
+  renderizarSalud();
 
-  const MESA_ANCHO = 2000;
-  const MESA_ALTO = 1500;
-  const HOLGURA = 300;
+  const inventario = {};
 
-  let panX = 0, panY = 0;
-  let escalaActual = 1;
-  let centrado = false;
-  let modoPan = false;
-
-  let arrastrandoCarta = false;
-  let offsetX = 0, offsetY = 0;
-  let angulo = 0;
-  let volteada = false;
-
-  let arrastrandoVista = false;
-  let panInicioX = 0, panInicioY = 0;
-  let seMovioVista = false;
-
-  let actualizandoDesdeRemoto = false;
-
-  function centrarMesa() {
-    const contRect = mesaContenedor.getBoundingClientRect();
-    panX = (contRect.width - MESA_ANCHO * escalaActual) / 2;
-    panY = (contRect.height - MESA_ALTO * escalaActual) / 2;
+  function agregarAlInventario(idItem, imagenItem, cantidad) {
+    if (!inventario[idItem]) {
+      inventario[idItem] = { imagen: imagenItem, cantidad: 0 };
+    }
+    inventario[idItem].cantidad += cantidad;
+    renderizarInventario();
   }
 
-  function limitarPan() {
-    const contRect = mesaContenedor.getBoundingClientRect();
-    const mesaAnchoEscalado = MESA_ANCHO * escalaActual;
-    const mesaAltoEscalado = MESA_ALTO * escalaActual;
+  function renderizarInventario() {
+    listaInventario.innerHTML = '';
+    for (const idItem in inventario) {
+      const item = inventario[idItem];
+      const slot = document.createElement('div');
+      slot.className = 'slot-item';
 
-    if (mesaAnchoEscalado <= contRect.width) {
-      const centroX = (contRect.width - mesaAnchoEscalado) / 2;
-      panX = Math.max(centroX - HOLGURA, Math.min(centroX + HOLGURA, panX));
-    } else {
-      const minX = contRect.width - mesaAnchoEscalado - HOLGURA;
-      const maxX = HOLGURA;
-      panX = Math.max(minX, Math.min(maxX, panX));
-    }
+      const img = document.createElement('img');
+      img.src = item.imagen;
+      img.alt = idItem;
 
-    if (mesaAltoEscalado <= contRect.height) {
-      const centroY = (contRect.height - mesaAltoEscalado) / 2;
-      panY = Math.max(centroY - HOLGURA, Math.min(centroY + HOLGURA, panY));
-    } else {
-      const minY = contRect.height - mesaAltoEscalado - HOLGURA;
-      const maxY = HOLGURA;
-      panY = Math.max(minY, Math.min(maxY, panY));
+      const cantidad = document.createElement('span');
+      cantidad.className = 'cantidad';
+      cantidad.textContent = 'x' + item.cantidad;
+
+      slot.appendChild(img);
+      slot.appendChild(cantidad);
+      listaInventario.appendChild(slot);
     }
   }
 
-  function actualizarTransformCarta() {
-    carta.style.transform = 'rotate(' + angulo + 'deg) rotateY(' + (volteada ? 180 : 0) + 'deg)';
+  function obtenerImagenPorCapa(indice) {
+    if (indice === 0) return 'f1';
+    if (indice === 1 || indice === 2) return 'f2';
+    return 'f3';
   }
 
-  function actualizarTransformMesa() {
-    limitarPan();
-    mesa.style.transform = 'translate(' + panX + 'px, ' + panY + 'px) scale(' + escalaActual + ')';
+  const bloques = [];
+  const mapaOcupacion = {};
+
+  function claveCelda(col, fila) {
+    return col + '_' + fila;
   }
 
-  function aplicarZoom(nuevoValor) {
-    nuevoValor = Math.max(50, Math.min(100, nuevoValor));
-    zoomInput.value = nuevoValor;
-    escalaActual = nuevoValor / 100;
-    zoomValor.textContent = Math.round(nuevoValor) + '%';
-    actualizarTransformMesa();
+  function crearBloque(col, filaLogica, x, y, tipoImagen, solido, esRompible) {
+    const divBloque = document.createElement('div');
+    divBloque.className = 'bloque';
+    divBloque.style.left = x + 'px';
+    divBloque.style.top = y + 'px';
+    divBloque.style.width = ANCHO_BLOQUE + 'px';
+    divBloque.style.height = ALTO_CAPA + 'px';
+    divBloque.style.backgroundImage = 'url(imagenes/' + tipoImagen + '.png)';
+    divBloque.dataset.tipo = tipoImagen;
+
+    const datosBloque = {
+      el: divBloque, col: col, filaLogica: filaLogica,
+      x: x, y: y, activo: true, solido: solido,
+      esRompible: esRompible, tipoImagen: tipoImagen
+    };
+    divBloque.dataset.idxBloque = bloques.length;
+    bloques.push(datosBloque);
+    mapaOcupacion[claveCelda(col, filaLogica)] = datosBloque;
+
+    contenedorCapas.appendChild(divBloque);
+    return datosBloque;
   }
 
-  function enviarEstadoCarta() {
-    if (actualizandoDesdeRemoto) return;
-    refCarta.set({
-      left: parseFloat(carta.style.left),
-      top: parseFloat(carta.style.top),
-      angulo: angulo,
-      volteada: volteada
-    });
-  }
-
-  refCarta.on('value', (snapshot) => {
-    const datos = snapshot.val();
-    if (!datos) return;
-    actualizandoDesdeRemoto = true;
-    carta.style.left = datos.left + 'px';
-    carta.style.top = datos.top + 'px';
-    angulo = datos.angulo;
-    volteada = datos.volteada;
-    actualizarTransformCarta();
-    actualizandoDesdeRemoto = false;
-  });
-
-  db.ref('.info/connected').on('value', (snap) => {
-    if (snap.val() === true) {
-      estadoConexion.textContent = 'Conectado';
-      estadoConexion.style.background = 'rgba(20,120,60,0.8)';
-    } else {
-      estadoConexion.textContent = 'Sin conexión';
-      estadoConexion.style.background = 'rgba(150,30,30,0.8)';
+  function generarCapas() {
+    contenedorCapas.innerHTML = '';
+    for (let fila = 0; fila < NUM_CAPAS; fila++) {
+      for (let col = 0; col < NUM_COLUMNAS; col++) {
+        const y = YPASTO + (fila * ALTO_CAPA);
+        const x = col * ANCHO_BLOQUE;
+        const imagenBloque = obtenerImagenPorCapa(fila);
+        crearBloque(col, fila, x, y, imagenBloque, true, imagenBloque === 'f1');
+      }
     }
-  });
-
-  if (!centrado) {
-    centrarMesa();
-    actualizarTransformMesa();
-    centrado = true;
   }
 
-  function iniciarArrastreCarta(clientX, clientY) {
-    const rect = carta.getBoundingClientRect();
-    offsetX = (clientX - rect.left) / escalaActual;
-    offsetY = (clientY - rect.top) / escalaActual;
-    arrastrandoCarta = true;
-    carta.style.cursor = 'grabbing';
-    carta.style.transition = 'none';
+  generarCapas();
+
+  function generarArboles() {
+    for (let col = 2; col < NUM_COLUMNAS; col += SEPARACION_ARBOLES) {
+      for (let t = 0; t < ALTURA_TRONCO; t++) {
+        const filaLogica = -(t + 1);
+        const xTronco = col * ANCHO_BLOQUE;
+        const yTronco = YPASTO - ALTO_CAPA * (t + 1);
+        crearBloque(col, filaLogica, xTronco, yTronco, 'f4', true, true);
+      }
+
+      const filaBaseCorona = -(ALTURA_TRONCO + 1);
+      for (let filaHoja = 0; filaHoja < 3; filaHoja++) {
+        for (let colHoja = -1; colHoja <= 1; colHoja++) {
+          const colReal = col + colHoja;
+          const filaLogica = filaBaseCorona - filaHoja;
+          const xHoja = colReal * ANCHO_BLOQUE;
+          const yHoja = YPASTO - ALTO_CAPA * (ALTURA_TRONCO + 1 + filaHoja);
+          crearBloque(colReal, filaLogica, xHoja, yHoja, 'f5', true, true);
+        }
+      }
+    }
   }
 
-  function moverCarta(clientX, clientY) {
-    const mesaRect = mesa.getBoundingClientRect();
-    const x = (clientX - mesaRect.left) / escalaActual - offsetX;
-    const y = (clientY - mesaRect.top) / escalaActual - offsetY;
-    carta.style.left = x + 'px';
-    carta.style.top = y + 'px';
-    enviarEstadoCarta();
+  generarArboles();
+
+  let posX = 30;
+  let posY = YPASTO - TAMANO_JUGADOR;
+  let velocidadY = 0;
+  let enElSuelo = true;
+  let jugadorBloqueado = false;
+  let offsetCamaraY = 0;
+
+  const teclas = {
+    w: false,
+    a: false,
+    s: false,
+    d: false,
+    espacio: false,
+    control: false
+  };
+
+  function moverCamaraVertical(direccion) {
+    const altoVistaMundo = ALTO_ESCENARIO / ZOOM_VISTA;
+    const centroJugadorY = posY + TAMANO_JUGADOR / 2;
+
+    const nuevoOffset = offsetCamaraY + (direccion * ALTO_CAPA);
+    const camaraYPropuesta = centroJugadorY - altoVistaMundo / 2 + nuevoOffset;
+
+    const minCamaraY = Y_TOPE_MUNDO;
+    const maxCamaraY = Y_FONDO_MUNDO - altoVistaMundo;
+
+    if (camaraYPropuesta >= minCamaraY && camaraYPropuesta <= maxCamaraY) {
+      offsetCamaraY = nuevoOffset;
+    } else if (camaraYPropuesta < minCamaraY) {
+      offsetCamaraY = minCamaraY - (centroJugadorY - altoVistaMundo / 2);
+    } else if (camaraYPropuesta > maxCamaraY) {
+      offsetCamaraY = maxCamaraY - (centroJugadorY - altoVistaMundo / 2);
+    }
   }
 
-  function terminarArrastreCarta() {
-    arrastrandoCarta = false;
-    carta.style.cursor = 'grab';
-    carta.style.transition = 'transform 0.3s ease';
-  }
-
-  function iniciarArrastreVista(clientX, clientY) {
-    arrastrandoVista = true;
-    seMovioVista = false;
-    panInicioX = clientX - panX;
-    panInicioY = clientY - panY;
-    mesaContenedor.style.cursor = 'grabbing';
-  }
-
-  function moverVista(clientX, clientY) {
-    seMovioVista = true;
-    panX = clientX - panInicioX;
-    panY = clientY - panInicioY;
-    actualizarTransformMesa();
-  }
-
-  carta.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return;
-    if (modoPan) return;
-    e.preventDefault();
-    iniciarArrastreCarta(e.clientX, e.clientY);
-  });
-
-  carta.addEventListener('touchstart', (e) => {
-    if (modoPan) return;
-    const t = e.touches[0];
-    iniciarArrastreCarta(t.clientX, t.clientY);
-  }, { passive: true });
-
-  mesaContenedor.addEventListener('mousedown', (e) => {
-    if (e.button === 2 || (modoPan && e.button === 0)) {
+  document.addEventListener('keydown', (e) => {
+    const tecla = e.key.toLowerCase();
+    if (tecla === 'w') teclas.w = true;
+    if (tecla === 'a') teclas.a = true;
+    if (tecla === 's') teclas.s = true;
+    if (tecla === 'd') teclas.d = true;
+    if (tecla === 'control') teclas.control = true;
+    if (tecla === ' ') {
+      teclas.espacio = true;
       e.preventDefault();
-      iniciarArrastreVista(e.clientX, e.clientY);
+    }
+    if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      moverCamaraVertical(-1);
+    }
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+      e.preventDefault();
+      moverCamaraVertical(1);
     }
   });
 
-  mesaContenedor.addEventListener('touchstart', (e) => {
-    if (!modoPan) return;
-    const t = e.touches[0];
-    iniciarArrastreVista(t.clientX, t.clientY);
-  }, { passive: true });
-
-  botonPanCamara.addEventListener('click', () => {
-    modoPan = !modoPan;
-    botonPanCamara.classList.toggle('activo', modoPan);
-    mesaContenedor.style.cursor = modoPan ? 'grab' : 'default';
+  document.addEventListener('keyup', (e) => {
+    const tecla = e.key.toLowerCase();
+    if (tecla === 'w') teclas.w = false;
+    if (tecla === 'a') teclas.a = false;
+    if (tecla === 's') teclas.s = false;
+    if (tecla === 'd') teclas.d = false;
+    if (tecla === 'control') teclas.control = false;
+    if (tecla === ' ') teclas.espacio = false;
   });
 
-  window.addEventListener('mousemove', (e) => {
-    if (arrastrandoCarta) {
-      moverCarta(e.clientX, e.clientY);
-    } else if (arrastrandoVista) {
-      moverVista(e.clientX, e.clientY);
-    }
-  });
+  function celdaSolidaActiva(col, fila) {
+    const bloque = mapaOcupacion[claveCelda(col, fila)];
+    return !!(bloque && bloque.activo && bloque.solido);
+  }
 
-  window.addEventListener('touchmove', (e) => {
-    const t = e.touches[0];
-    if (arrastrandoCarta) {
-      moverCarta(t.clientX, t.clientY);
-    } else if (arrastrandoVista) {
-      moverVista(t.clientX, t.clientY);
-    }
-  }, { passive: true });
+  function filaDesdeY(y) {
+    return Math.floor((y - YPASTO) / ALTO_CAPA);
+  }
 
-  window.addEventListener('mouseup', () => {
-    terminarArrastreCarta();
-    if (arrastrandoVista) {
-      arrastrandoVista = false;
-      mesaContenedor.style.cursor = modoPan ? 'grab' : 'default';
-    }
-  });
+  function moverConColisionX(xActual, y, deltaX) {
+    if (deltaX === 0) return xActual;
+    let xDestino = xActual + deltaX;
 
-  window.addEventListener('touchend', () => {
-    terminarArrastreCarta();
-    if (arrastrandoVista) {
-      arrastrandoVista = false;
-    }
-  });
+    const filaSup = filaDesdeY(y);
+    const filaInf = filaDesdeY(y + TAMANO_JUGADOR - 1);
 
-  mesaContenedor.addEventListener('wheel', (e) => {
+    if (deltaX > 0) {
+      const colDerDestino = Math.floor((xDestino + TAMANO_JUGADOR - 1) / ANCHO_BLOQUE);
+      for (let f = filaSup; f <= filaInf; f++) {
+        if (celdaSolidaActiva(colDerDestino, f)) {
+          return colDerDestino * ANCHO_BLOQUE - TAMANO_JUGADOR;
+        }
+      }
+    } else {
+      const colIzqDestino = Math.floor(xDestino / ANCHO_BLOQUE);
+      for (let f = filaSup; f <= filaInf; f++) {
+        if (celdaSolidaActiva(colIzqDestino, f)) {
+          return (colIzqDestino + 1) * ANCHO_BLOQUE;
+        }
+      }
+    }
+
+    return xDestino;
+  }
+
+  function moverConColisionYArriba(x, yActual, deltaY) {
+    let yDestino = yActual + deltaY;
+
+    const colIzq = Math.floor(x / ANCHO_BLOQUE);
+    const colDer = Math.floor((x + TAMANO_JUGADOR - 1) / ANCHO_BLOQUE);
+    const filaDestino = filaDesdeY(yDestino);
+
+    for (let c = colIzq; c <= colDer; c++) {
+      if (celdaSolidaActiva(c, filaDestino)) {
+        const topeBloque = YPASTO + (filaDestino + 1) * ALTO_CAPA;
+        return { y: topeBloque, golpeoTecho: true };
+      }
+    }
+
+    return { y: yDestino, golpeoTecho: false };
+  }
+
+  function obtenerSueloDebajoDeHitbox(xActual, yActual) {
+    const colIzq = Math.floor(xActual / ANCHO_BLOQUE);
+    const colDer = Math.floor((xActual + TAMANO_JUGADOR - 1) / ANCHO_BLOQUE);
+    const filaActual = filaDesdeY(yActual);
+
+    let mejorTope = ALTO_ESCENARIO;
+
+    for (let c = colIzq; c <= colDer; c++) {
+      for (let f = filaActual; f < NUM_CAPAS; f++) {
+        if (celdaSolidaActiva(c, f)) {
+          const topeBloque = YPASTO + f * ALTO_CAPA;
+          if (topeBloque < mejorTope && topeBloque >= yActual) {
+            mejorTope = topeBloque;
+          }
+          break;
+        }
+      }
+    }
+
+    return mejorTope;
+  }
+
+  function actualizarCamara() {
+    const anchoVistaMundo = ANCHO_VISIBLE / ZOOM_VISTA;
+    const altoVistaMundo = ALTO_ESCENARIO / ZOOM_VISTA;
+
+    let camaraX = posX + TAMANO_JUGADOR / 2 - anchoVistaMundo / 2;
+    camaraX = Math.max(0, Math.min(camaraX, ANCHO_MUNDO - anchoVistaMundo));
+
+    let camaraY = posY + TAMANO_JUGADOR / 2 - altoVistaMundo / 2 + offsetCamaraY;
+    const minCamaraY = Y_TOPE_MUNDO;
+    const maxCamaraY = Y_FONDO_MUNDO - altoVistaMundo;
+    camaraY = Math.max(minCamaraY, Math.min(camaraY, maxCamaraY));
+
+    camara.style.transform = 'scale(' + ZOOM_VISTA + ') translate(-' + camaraX + 'px, -' + camaraY + 'px)';
+  }
+
+  function actualizarJuego() {
+    if (!jugadorBloqueado) {
+      const velocidad = teclas.control ? VELOCIDAD_BASE * MULTIPLICADOR_CORRER : VELOCIDAD_BASE;
+
+      if (teclas.a) posX = moverConColisionX(posX, posY, -velocidad);
+      if (teclas.d) posX = moverConColisionX(posX, posY, velocidad);
+
+      if (teclas.espacio && enElSuelo) {
+        velocidadY = -FUERZA_SALTO;
+        enElSuelo = false;
+      }
+    }
+
+    velocidadY += GRAVEDAD;
+
+    if (velocidadY < 0) {
+      const resultado = moverConColisionYArriba(posX, posY, velocidadY);
+      posY = resultado.y;
+      if (resultado.golpeoTecho) velocidadY = 0;
+    } else {
+      let nuevoY = posY + velocidadY;
+      const limiteSuelo = obtenerSueloDebajoDeHitbox(posX, posY) - TAMANO_JUGADOR;
+
+      if (nuevoY >= limiteSuelo) {
+        nuevoY = limiteSuelo;
+        velocidadY = 0;
+        enElSuelo = true;
+      } else {
+        enElSuelo = false;
+      }
+      posY = nuevoY;
+    }
+
+    if (posX < 0) posX = 0;
+    if (posX > ANCHO_MUNDO - TAMANO_JUGADOR) posX = ANCHO_MUNDO - TAMANO_JUGADOR;
+
+    jugador.style.left = posX + 'px';
+    jugador.style.top = posY + 'px';
+
+    actualizarCamara();
+
+    requestAnimationFrame(actualizarJuego);
+  }
+
+  actualizarJuego();
+
+  contenedorCapas.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    const direccion = e.deltaY > 0 ? -5 : 5;
-    aplicarZoom(parseFloat(zoomInput.value) + direccion);
-  }, { passive: false });
+    if (jugadorBloqueado) return;
 
-  carta.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    if (seMovioVista) return;
-    menu.style.left = e.clientX + 'px';
-    menu.style.top = e.clientY + 'px';
-    menu.style.display = 'block';
-  });
+    const elementoBajoMouse = e.target;
+    if (!elementoBajoMouse.classList.contains('bloque')) return;
 
-  mesaContenedor.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
+    const idx = parseInt(elementoBajoMouse.dataset.idxBloque, 10);
+    const bloque = bloques[idx];
+    if (!bloque || !bloque.activo || !bloque.esRompible) return;
+
+    const centroX = posX + TAMANO_JUGADOR / 2;
+    const colJugador = Math.floor(centroX / ANCHO_BLOQUE);
+    const pieY = posY + TAMANO_JUGADOR;
+
+    const columnasAlcanzables = [colJugador, colJugador - 1, colJugador + 1];
+    const MARGEN = 45;
+    const bordeSuperior = bloque.y;
+    const bordeInferior = bloque.y + ALTO_CAPA;
+    const alcanzableVertical = pieY >= bordeSuperior - MARGEN && posY <= bordeInferior + MARGEN;
+
+    if (columnasAlcanzables.indexOf(bloque.col) === -1 || !alcanzableVertical) return;
+
+    const rectEscenario = escenario.getBoundingClientRect();
+    const clickX = e.clientX - rectEscenario.left;
+    const clickY = e.clientY - rectEscenario.top;
+
+    menuBloque.style.left = clickX + 'px';
+    menuBloque.style.top = clickY + 'px';
+    menuBloque.style.display = 'block';
+    menuBloque.dataset.bloqueObjetivo = idx;
   });
 
   document.addEventListener('click', (e) => {
-    if (!menu.contains(e.target)) menu.style.display = 'none';
+    if (!menuBloque.contains(e.target)) menuBloque.style.display = 'none';
   });
 
-  opciones.forEach(op => {
-    op.addEventListener('click', () => {
-      const accion = op.dataset.accion;
-      if (accion === 'rotar') {
-        angulo += 90;
-        actualizarTransformCarta();
-        enviarEstadoCarta();
-      } else if (accion === 'reversa') {
-        volteada = !volteada;
-        actualizarTransformCarta();
-        enviarEstadoCarta();
-      }
-      menu.style.display = 'none';
-    });
+  opcionRetirarBloque.addEventListener('click', () => {
+    const indice = parseInt(menuBloque.dataset.bloqueObjetivo, 10);
+    const bloque = bloques[indice];
+    menuBloque.style.display = 'none';
+    if (!bloque || !bloque.activo) return;
+
+    iniciarRetiroBloque(bloque);
   });
 
-  zoomInput.addEventListener('input', () => {
-    aplicarZoom(parseFloat(zoomInput.value));
-  });
+  let cancelarOperacionActiva = null;
 
-  window.addEventListener('resize', () => {
-    actualizarTransformMesa();
-  });
-
-  const musica = document.getElementById('musica-fondo');
-  const botonMusica = document.getElementById('boton-musica');
-  musica.volume = 0.4;
-  let sonando = false;
-
-  botonMusica.addEventListener('click', () => {
-    if (sonando) {
-      musica.pause();
-      botonMusica.textContent = '🔇';
-    } else {
-      musica.play();
-      botonMusica.textContent = '🔊';
+  botonCancelarPanel.addEventListener('click', () => {
+    if (cancelarOperacionActiva) {
+      cancelarOperacionActiva();
     }
-    sonando = !sonando;
   });
+
+  function iniciarRetiroBloque(bloque) {
+    jugadorBloqueado = true;
+    const tiempoRetiro = TIEMPOS_RETIRO[bloque.tipoImagen] || 5000;
+    let cancelado = false;
+
+    botonCancelarPanel.classList.add('visible');
+    cancelarOperacionActiva = function() {
+      cancelado = true;
+    };
+
+    const barraCont = document.createElement('div');
+    barraCont.className = 'barra-progreso-cont';
+    barraCont.style.left = bloque.x + (ANCHO_BLOQUE - 40) / 2 + 'px';
+    barraCont.style.top = (bloque.y - 12) + 'px';
+
+    const barraRelleno = document.createElement('div');
+    barraRelleno.className = 'barra-progreso-relleno';
+    barraCont.appendChild(barraRelleno);
+    contenedorCapas.appendChild(barraCont);
+
+    const inicio = Date.now();
+
+    function actualizarBarra() {
+      if (cancelado) {
+        barraCont.remove();
+        botonCancelarPanel.classList.remove('visible');
+        cancelarOperacionActiva = null;
+        jugadorBloqueado = false;
+        return;
+      }
+
+      const transcurrido = Date.now() - inicio;
+      const porcentaje = Math.min(100, (transcurrido / tiempoRetiro) * 100);
+      barraRelleno.style.width = porcentaje + '%';
+
+      if (transcurrido >= tiempoRetiro) {
+        bloque.activo = false;
+        bloque.el.remove();
+        barraCont.remove();
+        botonCancelarPanel.classList.remove('visible');
+        cancelarOperacionActiva = null;
+        jugadorBloqueado = false;
+        agregarAlInventario('item_' + bloque.tipoImagen, 'imagenes/items/item_' + bloque.tipoImagen + '.png', CANTIDAD_POR_BLOQUE);
+        return;
+      }
+
+      requestAnimationFrame(actualizarBarra);
+    }
+
+    actualizarBarra();
+  }
+
+  let pasosDeHora = 0;
+  const PASOS_POR_HORA = 12;
+
+  function actualizarCicloDia() {
+    pasosDeHora = (pasosDeHora + 1) % (24 * PASOS_POR_HORA);
+
+    const totalMinutos = pasosDeHora * 5;
+    const horaEntera = (6 + Math.floor(totalMinutos / 60)) % 24;
+    const minutos = totalMinutos % 60;
+
+    const horaTexto = (horaEntera < 10 ? '0' : '') + horaEntera + ':' + (minutos < 10 ? '0' : '') + minutos;
+    relojEl.textContent = horaTexto;
+
+    escenario.classList.remove('dia', 'tarde', 'noche');
+    if (horaEntera >= 6 && horaEntera < 12) {
+      escenario.classList.add('dia');
+    } else if (horaEntera >= 12 && horaEntera < 18) {
+      escenario.classList.add('tarde');
+    } else {
+      escenario.classList.add('noche');
+    }
+  }
+
+  actualizarCicloDia();
+  setInterval(actualizarCicloDia, 1000);
 </script>
 
 </body>
