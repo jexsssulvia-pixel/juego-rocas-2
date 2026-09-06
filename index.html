@@ -2,723 +2,1618 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cuadrito Saltarin</title>
+<title>Zombie Maze - Multijugador</title>
 <style>
-  body {
-    margin: 0;
-    background: #1a1a2e;
-    height: 100vh;
-    font-family: Arial, sans-serif;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-  }
-  #panel-accion {
-    width: 160px;
-    height: 500px;
-    background: #16213e;
-    border: 2px solid #444;
-    border-radius: 6px;
-    padding: 12px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  #panel-accion h3 {
-    color: #f4f1ea;
-    font-size: 14px;
-    margin: 0 0 12px 0;
-    text-align: center;
-  }
-  #boton-cancelar-panel {
-    display: none;
-    background: #b23a48;
-    color: #f4f1ea;
-    border: 1px solid #7a1f30;
-    border-radius: 6px;
-    padding: 12px 10px;
-    font-size: 13px;
-    cursor: pointer;
-    text-align: center;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  #boton-cancelar-panel:hover {
-    background: #d14a5a;
-  }
-  #boton-cancelar-panel.visible {
-    display: block;
-  }
-  #escenario {
-    position: relative;
-    width: 900px;
-    height: 500px;
-    background: #87ceeb;
-    border: 2px solid #444;
-    overflow: hidden;
-    transition: background 2s ease;
-  }
-  #escenario.dia { background: #87ceeb; }
-  #escenario.tarde { background: #e8a87c; }
-  #escenario.noche { background: #0d1b2a; }
-  #camara {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    transform-origin: 0 0;
-  }
-  .bloque {
-    position: absolute;
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
-  }
-  .bloque:hover {
-    outline: 2px solid #f5c518;
-    outline-offset: -2px;
-  }
-  #jugador {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    background: #e94560;
-    border-radius: 4px;
-    z-index: 10;
-  }
-  #instrucciones {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #f4f1ea;
-    font-size: 12px;
-    text-align: center;
-    z-index: 60;
-  }
-  .menu-bloque {
-    position: absolute;
-    display: none;
-    background: #f4f1ea;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    padding: 4px;
-    z-index: 50;
-    min-width: 140px;
-  }
-  .opcion-bloque {
-    padding: 8px 12px;
-    font-size: 13px;
-    color: #1a1a1a;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  .opcion-bloque:hover {
-    background: #e0dcd0;
-  }
-  .barra-progreso-cont {
-    position: absolute;
-    width: 40px;
-    height: 6px;
-    background: rgba(0,0,0,0.5);
-    border-radius: 3px;
-    z-index: 40;
-    overflow: hidden;
-  }
-  .barra-progreso-relleno {
-    height: 100%;
-    width: 0%;
-    background: #4caf50;
-  }
-  #inventario {
-    width: 160px;
-    height: 500px;
-    background: #16213e;
-    border: 2px solid #444;
-    border-radius: 6px;
-    padding: 12px;
-    box-sizing: border-box;
-  }
-  #inventario h3 {
-    color: #f4f1ea;
-    font-size: 14px;
-    margin: 0 0 12px 0;
-    text-align: center;
-  }
-  .slot-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #0f3460;
-    border: 1px solid #533483;
-    border-radius: 6px;
-    padding: 6px;
-    margin-bottom: 8px;
-  }
-  .slot-item img {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-  }
-  .slot-item .cantidad {
-    color: #f4f1ea;
-    font-size: 14px;
-    font-weight: bold;
-  }
-  #barra-salud {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    display: flex;
-    gap: 3px;
-    z-index: 60;
-  }
-  .corazon {
-    width: 18px;
-    height: 18px;
-    background: #e94560;
-    border: 1px solid #7a1f30;
-    border-radius: 3px;
-  }
-  .corazon.vacio {
-    background: #3a2a2a;
-  }
-  #reloj {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(0,0,0,0.5);
-    color: #f4f1ea;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 13px;
-    z-index: 60;
-  }
+    body {
+        margin: 0;
+        background: #111;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: Consolas, monospace;
+        color: white;
+    }
+    #hud {
+        display: flex;
+        justify-content: space-between;
+        width: 1100px;
+        padding: 8px 0;
+        font-size: 13px;
+        font-weight: bold;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    canvas {
+        background: #2b2b2e;
+        border: 2px solid #555;
+    }
+    #overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background: rgba(0,0,0,0.75);
+        text-align: center;
+        z-index: 20;
+    }
+    #overlay h1 { font-size: 44px; margin: 0; }
+    #overlay p { font-size: 16px; }
+    #wrapper { position: relative; }
+    #mensajePuerta {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.7);
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        display: none;
+    }
+    #panelReparacion {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.75);
+        padding: 14px 20px;
+        border-radius: 8px;
+        text-align: center;
+        display: none;
+        min-width: 220px;
+    }
+    #panelReparacion .barraFondo {
+        background: rgba(255,255,255,0.15);
+        height: 14px;
+        border-radius: 7px;
+        overflow: hidden;
+        margin: 8px 0;
+    }
+    #panelReparacion .barraProgreso {
+        background: #ffd700;
+        height: 100%;
+        width: 0%;
+    }
+    #panelReparacion .avisoPeligro {
+        color: #ff5555;
+        font-size: 12px;
+        margin-top: 4px;
+        display: none;
+    }
+    #panelLogin {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: #111;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 50;
+    }
+    #panelLogin .caja {
+        background: #222;
+        border: 2px solid #444;
+        border-radius: 10px;
+        padding: 30px 40px;
+        text-align: center;
+        min-width: 320px;
+    }
+    #panelLogin h1 { color: #ffd700; margin-top: 0; }
+    #panelLogin input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 6px;
+        border: 1px solid #555;
+        background: #333;
+        color: white;
+        font-family: Consolas, monospace;
+        font-size: 14px;
+    }
+    #panelLogin button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 6px;
+        border: none;
+        background: #ffd700;
+        color: #111;
+        font-weight: bold;
+        font-family: Consolas, monospace;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    #panelLogin button:hover { background: #ffe44d; }
+    #panelLogin .linkSala {
+        margin-top: 14px;
+        font-size: 12px;
+        opacity: 0.8;
+        word-break: break-all;
+    }
+    #listaJugadores {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(0,0,0,0.6);
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 12px;
+        text-align: left;
+        z-index: 10;
+    }
+    #listaJugadores div { margin: 2px 0; }
 </style>
 </head>
 <body>
 
-<div id="instrucciones">W A S D mover, Espacio saltar, Ctrl correr, flechas arriba/abajo mover camara, clic derecho para retirar bloque</div>
-
-<div id="panel-accion">
-  <h3>Accion</h3>
-  <div id="boton-cancelar-panel">Cancelar operacion</div>
+<!-- ==================== PANTALLA DE LOGIN / SALA ==================== -->
+<div id="panelLogin">
+    <div class="caja">
+        <h1>🧟 Zombie Maze</h1>
+        <div id="loginSalaExistente" style="display:none;">
+            <p>Te vas a unir a la sala: <b id="codigoSalaMostrado"></b></p>
+        </div>
+        <div id="loginSalaNueva" style="display:none;">
+            <p>Vas a crear una sala nueva</p>
+        </div>
+        <input type="text" id="inputNombre" placeholder="Tu nombre" maxlength="14">
+        <button id="btnEntrar">Entrar a la partida</button>
+        <div class="linkSala" id="textoLinkSala"></div>
+    </div>
 </div>
 
-<div id="escenario" class="dia">
-  <div id="camara">
-    <div id="contenedor-capas"></div>
-    <div id="jugador"></div>
-  </div>
-  <div id="barra-salud"></div>
-  <div id="reloj">06:00</div>
+<div id="hud" style="display:none;">
+    <span id="vida">Vida: 10 / 10</span>
+    <span id="arma">Arma: 6 balas (R para recargar)</span>
+    <span id="tiempo">Tiempo: 2:00</span>
+    <span id="kills">Zombies eliminados: 0</span>
+    <span id="reparaciones">Cajas reparadas: 0 / 4</span>
+</div>
+<div id="hud2" style="width:1100px; text-align:center; font-size:12px; opacity:0.8; padding-bottom:4px; display:none;">
+    WASD/Flechas: moverse (dispara hacia donde te mueves) | Clic derecho: disparar | Espacio: abrir/cerrar puerta | Quédate quieto sobre una caja naranja para repararla | R: recargar
 </div>
 
-<div id="inventario">
-  <h3>Inventario</h3>
-  <div id="lista-inventario"></div>
+<div id="wrapper" style="display:none;">
+    <canvas id="canvas" width="1100" height="660"></canvas>
+    <div id="listaJugadores"></div>
+    <div id="overlay">
+        <h1 id="overlayTitle"></h1>
+        <p id="overlaySubtitle"></p>
+    </div>
+    <div id="mensajePuerta">Presiona ESPACIO para abrir/cerrar la puerta</div>
+    <div id="panelReparacion">
+        <div>Reparando caja... quédate quieto encima</div>
+        <div class="barraFondo"><div class="barraProgreso" id="barraReparacion"></div></div>
+        <div class="avisoPeligro" id="avisoPeligro">⚠ ¡Zombie cerca! Si te alejas, el progreso se reinicia</div>
+    </div>
 </div>
 
-<div class="menu-bloque" id="menu-bloque">
-  <div class="opcion-bloque" id="opcion-retirar-bloque">Retirar</div>
-</div>
+<!-- ==================== FIREBASE ==================== -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// ====================================================================
+// CONFIGURACION DE FIREBASE
+// Reemplaza estos valores con los de TU proyecto de Firebase
+// (el mismo que usaste para "juego-de-rocas", o uno nuevo).
+// Los encuentras en: Firebase Console > Configuración del proyecto > General
+// > Tus apps > Configuración del SDK
+// ====================================================================
+const firebaseConfig = {
+    apiKey: "AIzaSyAP8Slqy2rHs21VG4UAKjUtxm_U447U8vs",
+    databaseURL: "https://juego-de-rocas-default-rtdb.firebaseio.com",
+    projectId: "juego-de-rocas",
+    appId: "1:229026823251:web:763bbd486b0ece44c11aa6"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+</script>
 
 <script>
-  const jugador = document.getElementById('jugador');
-  const escenario = document.getElementById('escenario');
-  const camara = document.getElementById('camara');
-  const contenedorCapas = document.getElementById('contenedor-capas');
-  const menuBloque = document.getElementById('menu-bloque');
-  const opcionRetirarBloque = document.getElementById('opcion-retirar-bloque');
-  const listaInventario = document.getElementById('lista-inventario');
-  const barraSalud = document.getElementById('barra-salud');
-  const relojEl = document.getElementById('reloj');
-  const botonCancelarPanel = document.getElementById('boton-cancelar-panel');
+// ==================== CONFIGURACION DEL JUEGO ====================
+const MAZE_COLS = 20;
+const MAZE_ROWS = 12;
+const CELL_SIZE = 55;
 
-  const ANCHO_VISIBLE = 900;
-  const ALTO_ESCENARIO = 500;
-  const ALTO_CAPA = 40;
-  const ANCHO_BLOQUE = 60;
-  const NUM_CAPAS = 8;
-  const NUM_COLUMNAS = 50;
-  const ANCHO_MUNDO = ANCHO_BLOQUE * NUM_COLUMNAS;
-  const ALTO_TOTAL_CAPAS = ALTO_CAPA * NUM_CAPAS;
-  const TAMANO_JUGADOR = 40;
-  const VELOCIDAD_BASE = 4;
-  const MULTIPLICADOR_CORRER = 1.5;
-  const FUERZA_SALTO = 12;
-  const GRAVEDAD = 0.6;
-  const CANTIDAD_POR_BLOQUE = 3;
-  const VIDA_MAXIMA = 10;
-  const ALTURA_TRONCO = 4;
-  const SEPARACION_ARBOLES = 10;
-  const ZOOM_VISTA = 0.75;
-  const ALTURA_MAXIMA_VISTA_BLOQUES = 10;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-  const YPASTO = ALTO_ESCENARIO - ALTO_TOTAL_CAPAS;
-  const Y_TOPE_MUNDO = YPASTO - ALTO_CAPA * ALTURA_MAXIMA_VISTA_BLOQUES;
-  const Y_FONDO_MUNDO = ALTO_ESCENARIO;
+const PLAYER_SIZE = 22;
+const PLAYER_SPEED = 3.2;
+const ZOMBIE_SIZE = 24;
+const BULLET_SPEED = 10;
+const BULLET_RADIUS = 4;
 
-  const TIEMPOS_RETIRO = {
-    f1: 5000,
-    f4: 15000,
-    f5: 5000
-  };
+const VIDA_MAXIMA = 10;
+const DAÑO_POR_GOLPE = 2;
+const COOLDOWN_GOLPE_MS = 1000; // 1 segundo de invulnerabilidad tras ser atacado
+const MUNICION_MAXIMA = 6;
+const MUNICION_POR_CAJA = 5;
+const ZOMBIE_TIEMPO_ABRIR_PUERTA = 3000;
+const ZOMBIE_VIDA_MAXIMA = 2;
 
-  let vidaActual = VIDA_MAXIMA;
+const TIEMPO_LIMITE_MS = 2 * 60 * 1000;
+const INTERVALO_SPAWN_MS = 10000;
+const REPARACION_DURACION_MS = 10000;
+const REPARACION_DIST_ZOMBIE_PELIGRO = 90;
 
-  function renderizarSalud() {
-    barraSalud.innerHTML = '';
-    for (let i = 0; i < VIDA_MAXIMA; i++) {
-      const corazon = document.createElement('div');
-      corazon.className = 'corazon' + (i < vidaActual ? '' : ' vacio');
-      barraSalud.appendChild(corazon);
+// Colores distintos para cada jugador que se conecta (se asignan en orden)
+const COLORES_JUGADORES = [
+    '#1565c0', // azul
+    '#e53935', // rojo
+    '#43a047', // verde (distinto del zombie)
+    '#fb8c00', // naranja
+    '#8e24aa', // violeta
+    '#00acc1'  // turquesa
+];
+
+// ==================== IDENTIDAD DE ESTA SESION ====================
+const MI_ID = 'jugador_' + Math.random().toString(36).substr(2, 9);
+let miNombre = '';
+let miColor = COLORES_JUGADORES[0];
+let codigoSala = '';
+let esHost = false; // el primer jugador en la sala simula zombies/spawns para evitar desincronizacion
+
+// ==================== LABERINTO: 10 HABITACIONES EN 2 FILAS DE 5 ====================
+// (Igual para todos: se genera de forma determinista, no aleatoria, para
+// que cada cliente calcule exactamente el mismo laberinto sin necesidad
+// de sincronizarlo por red.)
+let puertasLocal = []; // referencia local usada por las funciones de colision
+
+function crearLaberinto() {
+    const cols = MAZE_COLS, rows = MAZE_ROWS;
+    const celdas = [];
+    for (let x = 0; x < cols; x++) {
+        celdas.push([]);
+        for (let y = 0; y < rows; y++) {
+            celdas[x].push({ n: true, s: true, e: true, w: true });
+        }
     }
-  }
-  renderizarSalud();
 
-  const inventario = {};
-
-  function agregarAlInventario(idItem, imagenItem, cantidad) {
-    if (!inventario[idItem]) {
-      inventario[idItem] = { imagen: imagenItem, cantidad: 0 };
+    function abrir(x1, y1, x2, y2) {
+        if (x2 === x1 && y2 === y1 - 1) { celdas[x1][y1].n = false; celdas[x2][y2].s = false; }
+        else if (x2 === x1 && y2 === y1 + 1) { celdas[x1][y1].s = false; celdas[x2][y2].n = false; }
+        else if (x2 === x1 + 1 && y2 === y1) { celdas[x1][y1].e = false; celdas[x2][y2].w = false; }
+        else if (x2 === x1 - 1 && y2 === y1) { celdas[x1][y1].w = false; celdas[x2][y2].e = false; }
     }
-    inventario[idItem].cantidad += cantidad;
-    renderizarInventario();
-  }
 
-  function renderizarInventario() {
-    listaInventario.innerHTML = '';
-    for (const idItem in inventario) {
-      const item = inventario[idItem];
-      const slot = document.createElement('div');
-      slot.className = 'slot-item';
+    const habitaciones = [
+        { x1: 0,  y1: 0, x2: 3,  y2: 3 },
+        { x1: 4,  y1: 0, x2: 7,  y2: 3 },
+        { x1: 8,  y1: 0, x2: 11, y2: 3 },
+        { x1: 12, y1: 0, x2: 15, y2: 3 },
+        { x1: 16, y1: 0, x2: 19, y2: 3 },
+        { x1: 0,  y1: 8, x2: 3,  y2: 11 },
+        { x1: 4,  y1: 8, x2: 7,  y2: 11 },
+        { x1: 8,  y1: 8, x2: 11, y2: 11 },
+        { x1: 12, y1: 8, x2: 15, y2: 11 },
+        { x1: 16, y1: 8, x2: 19, y2: 11 }
+    ];
 
-      const img = document.createElement('img');
-      img.src = item.imagen;
-      img.alt = idItem;
-
-      const cantidad = document.createElement('span');
-      cantidad.className = 'cantidad';
-      cantidad.textContent = 'x' + item.cantidad;
-
-      slot.appendChild(img);
-      slot.appendChild(cantidad);
-      listaInventario.appendChild(slot);
+    for (const h of habitaciones) {
+        for (let x = h.x1; x <= h.x2; x++) {
+            for (let y = h.y1; y <= h.y2; y++) {
+                if (x < h.x2) abrir(x, y, x + 1, y);
+                if (y < h.y2) abrir(x, y, x, y + 1);
+            }
+        }
     }
-  }
 
-  function obtenerImagenPorCapa(indice) {
-    if (indice === 0) return 'f1';
-    if (indice === 1 || indice === 2) return 'f2';
-    return 'f3';
-  }
+    for (let y = 4; y <= 7; y++) {
+        for (let x = 0; x < cols - 1; x++) {
+            abrir(x, y, x + 1, y);
+        }
+        if (y < 7) {
+            for (let x = 0; x < cols; x++) abrir(x, y, x, y + 1);
+        }
+    }
 
-  const bloques = [];
-  const mapaOcupacion = {};
+    const puertasIniciales = [
+        { id: 'p0', x: 1,  y: 3, dir: 's', abierta: false },
+        { id: 'p1', x: 5,  y: 3, dir: 's', abierta: false },
+        { id: 'p2', x: 9,  y: 3, dir: 's', abierta: false },
+        { id: 'p3', x: 13, y: 3, dir: 's', abierta: false },
+        { id: 'p4', x: 17, y: 3, dir: 's', abierta: false },
+        { id: 'p5', x: 1,  y: 8, dir: 'n', abierta: false },
+        { id: 'p6', x: 5,  y: 8, dir: 'n', abierta: false },
+        { id: 'p7', x: 9,  y: 8, dir: 'n', abierta: false },
+        { id: 'p8', x: 13, y: 8, dir: 'n', abierta: false },
+        { id: 'p9', x: 17, y: 8, dir: 'n', abierta: false }
+    ];
 
-  function claveCelda(col, fila) {
-    return col + '_' + fila;
-  }
+    for (const p of puertasIniciales) {
+        abrirParaPuerta(celdas, p.x, p.y, p.dir);
+    }
 
-  function crearBloque(col, filaLogica, x, y, tipoImagen, solido, esRompible) {
-    const divBloque = document.createElement('div');
-    divBloque.className = 'bloque';
-    divBloque.style.left = x + 'px';
-    divBloque.style.top = y + 'px';
-    divBloque.style.width = ANCHO_BLOQUE + 'px';
-    divBloque.style.height = ALTO_CAPA + 'px';
-    divBloque.style.backgroundImage = 'url(imagenes/' + tipoImagen + '.png)';
-    divBloque.dataset.tipo = tipoImagen;
+    puertasLocal = puertasIniciales;
+    return celdas;
+}
 
-    const datosBloque = {
-      el: divBloque, col: col, filaLogica: filaLogica,
-      x: x, y: y, activo: true, solido: solido,
-      esRompible: esRompible, tipoImagen: tipoImagen
+function abrirParaPuerta(celdas, x, y, dir) {
+    if (dir === 'n' && y > 0) { celdas[x][y].n = false; celdas[x][y - 1].s = false; }
+    if (dir === 's' && y < MAZE_ROWS - 1) { celdas[x][y].s = false; celdas[x][y + 1].n = false; }
+    if (dir === 'e' && x < MAZE_COLS - 1) { celdas[x][y].e = false; celdas[x + 1][y].w = false; }
+    if (dir === 'w' && x > 0) { celdas[x][y].w = false; celdas[x - 1][y].e = false; }
+}
+
+function puedeMover(maze, x, y, nx, ny) {
+    if (nx < 0 || ny < 0 || nx >= MAZE_COLS || ny >= MAZE_ROWS) return false;
+
+    const puerta = puertaEntre(x, y, nx, ny);
+    if (puerta && !puerta.abierta) return false;
+
+    if (nx === x && ny === y - 1) return !maze[x][y].n;
+    if (nx === x && ny === y + 1) return !maze[x][y].s;
+    if (nx === x + 1 && ny === y) return !maze[x][y].e;
+    if (nx === x - 1 && ny === y) return !maze[x][y].w;
+    return false;
+}
+
+function puertaEntre(x, y, nx, ny) {
+    for (const p of puertasLocal) {
+        if (p.dir === 'n' && p.x === x && p.y === y && nx === x && ny === y - 1) return p;
+        if (p.dir === 's' && p.x === x && p.y === y && nx === x && ny === y + 1) return p;
+        if (p.dir === 'e' && p.x === x && p.y === y && nx === x + 1 && ny === y) return p;
+        if (p.dir === 'w' && p.x === x && p.y === y && nx === x - 1 && ny === y) return p;
+        if (p.dir === 'n' && p.x === nx && p.y - 1 === ny && x === nx && y === ny + 1) return p;
+        if (p.dir === 's' && p.x === nx && p.y + 1 === ny && x === nx && y === ny - 1) return p;
+        if (p.dir === 'e' && p.x + 1 === nx && p.y === ny && x === nx - 1 && y === ny) return p;
+        if (p.dir === 'w' && p.x - 1 === nx && p.y === ny && x === nx + 1 && y === ny) return p;
+    }
+    return null;
+}
+
+// ==================== PATHFINDING (BFS) - solo lo corre el host ====================
+function buscarCamino(maze, inicio, meta) {
+    const clave = (p) => p[0] + ',' + p[1];
+    const visitados = new Set([clave(inicio)]);
+    const vieneDe = {};
+    const cola = [inicio];
+    let encontrado = false;
+
+    while (cola.length > 0) {
+        const actual = cola.shift();
+        if (actual[0] === meta[0] && actual[1] === meta[1]) { encontrado = true; break; }
+
+        const direcciones = [[0, -1], [0, 1], [1, 0], [-1, 0]];
+        for (const [dx, dy] of direcciones) {
+            const sig = [actual[0] + dx, actual[1] + dy];
+            const k = clave(sig);
+            if (!visitados.has(k) && puedeMover(maze, actual[0], actual[1], sig[0], sig[1])) {
+                visitados.add(k);
+                vieneDe[k] = actual;
+                cola.push(sig);
+            }
+        }
+    }
+
+    const camino = [];
+    if (!encontrado) return camino;
+
+    let nodo = meta;
+    while (!(nodo[0] === inicio[0] && nodo[1] === inicio[1])) {
+        camino.push(nodo);
+        nodo = vieneDe[clave(nodo)];
+    }
+    camino.reverse();
+    return camino;
+}
+
+// ==================== POSICIONES FIJAS: cajas, esquinas ====================
+const ESQUINAS_SPAWN = [
+    [1, 1],
+    [MAZE_COLS - 2, 1],
+    [1, MAZE_ROWS - 2],
+    [MAZE_COLS - 2, MAZE_ROWS - 2]
+];
+
+const ESQUINAS_REPARACION = [
+    [1, 1],
+    [MAZE_COLS - 2, 1],
+    [1, MAZE_ROWS - 2],
+    [MAZE_COLS - 2, MAZE_ROWS - 2]
+];
+
+const POSICIONES_MUNICION = [
+    { x: 2, y: 1 },
+    { x: 17, y: 1 },
+    { x: 17, y: 9 },
+    { x: 2, y: 9 },
+    { x: 9, y: 5 }
+];
+
+function celdaCentroPixel(cx, cy, size) {
+    return {
+        x: cx * CELL_SIZE + (CELL_SIZE - size) / 2,
+        y: cy * CELL_SIZE + (CELL_SIZE - size) / 2
     };
-    divBloque.dataset.idxBloque = bloques.length;
-    bloques.push(datosBloque);
-    mapaOcupacion[claveCelda(col, filaLogica)] = datosBloque;
+}
 
-    contenedorCapas.appendChild(divBloque);
-    return datosBloque;
-  }
+function pixelACelda(pos, size) {
+    const cx = pos.x + size / 2;
+    const cy = pos.y + size / 2;
+    return [
+        Math.min(Math.max(Math.floor(cx / CELL_SIZE), 0), MAZE_COLS - 1),
+        Math.min(Math.max(Math.floor(cy / CELL_SIZE), 0), MAZE_ROWS - 1)
+    ];
+}
 
-  function generarCapas() {
-    contenedorCapas.innerHTML = '';
-    for (let fila = 0; fila < NUM_CAPAS; fila++) {
-      for (let col = 0; col < NUM_COLUMNAS; col++) {
-        const y = YPASTO + (fila * ALTO_CAPA);
-        const x = col * ANCHO_BLOQUE;
-        const imagenBloque = obtenerImagenPorCapa(fila);
-        crearBloque(col, fila, x, y, imagenBloque, true, imagenBloque === 'f1');
-      }
-    }
-  }
+// ==================== ESTADO LOCAL DEL JUEGO ====================
+let maze;
+let miJugador = { x: 0, y: 0, dir: { x: 0, y: -1 }, vida: VIDA_MAXIMA, municion: MUNICION_MAXIMA, kills: 0, ultimoGolpe: 0, nombre: '', color: '' };
+let otrosJugadores = {}; // id -> datos del jugador (sincronizado desde Firebase)
+let zombies = [];        // simulados por el host, sincronizados a todos
+let bullets = [];        // balas de TODOS los jugadores, cada cliente simula las propias y lee las ajenas
+let cajasMunicion = [];
+let cajasReparacion = [];
+let tiempoInicio = 0;
+let gameOver = false;
+let victory = false;
+let cajaReparandoActual = null;
+const keysDown = new Set();
 
-  generarCapas();
+let refSala, refJugadores, refZombies, refPuertas, refCajasMun, refCajasRep, refEstado, refBullets;
 
-  function generarArboles() {
-    for (let col = 2; col < NUM_COLUMNAS; col += SEPARACION_ARBOLES) {
-      for (let t = 0; t < ALTURA_TRONCO; t++) {
-        const filaLogica = -(t + 1);
-        const xTronco = col * ANCHO_BLOQUE;
-        const yTronco = YPASTO - ALTO_CAPA * (t + 1);
-        crearBloque(col, filaLogica, xTronco, yTronco, 'f4', true, true);
-      }
+// ==================== LOGIN: leer sala de la URL o crear una nueva ====================
+function generarCodigoSala() {
+    return Math.random().toString(36).substr(2, 6).toUpperCase();
+}
 
-      const filaBaseCorona = -(ALTURA_TRONCO + 1);
-      for (let filaHoja = 0; filaHoja < 3; filaHoja++) {
-        for (let colHoja = -1; colHoja <= 1; colHoja++) {
-          const colReal = col + colHoja;
-          const filaLogica = filaBaseCorona - filaHoja;
-          const xHoja = colReal * ANCHO_BLOQUE;
-          const yHoja = YPASTO - ALTO_CAPA * (ALTURA_TRONCO + 1 + filaHoja);
-          crearBloque(colReal, filaLogica, xHoja, yHoja, 'f5', true, true);
-        }
-      }
-    }
-  }
+function inicializarLogin() {
+    const params = new URLSearchParams(window.location.search);
+    const salaUrl = params.get('sala');
 
-  generarArboles();
-
-  let posX = 30;
-  let posY = YPASTO - TAMANO_JUGADOR;
-  let velocidadY = 0;
-  let enElSuelo = true;
-  let jugadorBloqueado = false;
-  let offsetCamaraY = 0;
-
-  const teclas = {
-    w: false,
-    a: false,
-    s: false,
-    d: false,
-    espacio: false,
-    control: false
-  };
-
-  function moverCamaraVertical(direccion) {
-    const altoVistaMundo = ALTO_ESCENARIO / ZOOM_VISTA;
-    const centroJugadorY = posY + TAMANO_JUGADOR / 2;
-
-    const nuevoOffset = offsetCamaraY + (direccion * ALTO_CAPA);
-    const camaraYPropuesta = centroJugadorY - altoVistaMundo / 2 + nuevoOffset;
-
-    const minCamaraY = Y_TOPE_MUNDO;
-    const maxCamaraY = Y_FONDO_MUNDO - altoVistaMundo;
-
-    if (camaraYPropuesta >= minCamaraY && camaraYPropuesta <= maxCamaraY) {
-      offsetCamaraY = nuevoOffset;
-    } else if (camaraYPropuesta < minCamaraY) {
-      offsetCamaraY = minCamaraY - (centroJugadorY - altoVistaMundo / 2);
-    } else if (camaraYPropuesta > maxCamaraY) {
-      offsetCamaraY = maxCamaraY - (centroJugadorY - altoVistaMundo / 2);
-    }
-  }
-
-  document.addEventListener('keydown', (e) => {
-    const tecla = e.key.toLowerCase();
-    if (tecla === 'w') teclas.w = true;
-    if (tecla === 'a') teclas.a = true;
-    if (tecla === 's') teclas.s = true;
-    if (tecla === 'd') teclas.d = true;
-    if (tecla === 'control') teclas.control = true;
-    if (tecla === ' ') {
-      teclas.espacio = true;
-      e.preventDefault();
-    }
-    if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-      e.preventDefault();
-      moverCamaraVertical(-1);
-    }
-    if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-      e.preventDefault();
-      moverCamaraVertical(1);
-    }
-  });
-
-  document.addEventListener('keyup', (e) => {
-    const tecla = e.key.toLowerCase();
-    if (tecla === 'w') teclas.w = false;
-    if (tecla === 'a') teclas.a = false;
-    if (tecla === 's') teclas.s = false;
-    if (tecla === 'd') teclas.d = false;
-    if (tecla === 'control') teclas.control = false;
-    if (tecla === ' ') teclas.espacio = false;
-  });
-
-  function celdaSolidaActiva(col, fila) {
-    const bloque = mapaOcupacion[claveCelda(col, fila)];
-    return !!(bloque && bloque.activo && bloque.solido);
-  }
-
-  function filaDesdeY(y) {
-    return Math.floor((y - YPASTO) / ALTO_CAPA);
-  }
-
-  function moverConColisionX(xActual, y, deltaX) {
-    if (deltaX === 0) return xActual;
-    let xDestino = xActual + deltaX;
-
-    const filaSup = filaDesdeY(y);
-    const filaInf = filaDesdeY(y + TAMANO_JUGADOR - 1);
-
-    if (deltaX > 0) {
-      const colDerDestino = Math.floor((xDestino + TAMANO_JUGADOR - 1) / ANCHO_BLOQUE);
-      for (let f = filaSup; f <= filaInf; f++) {
-        if (celdaSolidaActiva(colDerDestino, f)) {
-          return colDerDestino * ANCHO_BLOQUE - TAMANO_JUGADOR;
-        }
-      }
+    if (salaUrl) {
+        codigoSala = salaUrl.toUpperCase();
+        document.getElementById('loginSalaExistente').style.display = 'block';
+        document.getElementById('codigoSalaMostrado').textContent = codigoSala;
     } else {
-      const colIzqDestino = Math.floor(xDestino / ANCHO_BLOQUE);
-      for (let f = filaSup; f <= filaInf; f++) {
-        if (celdaSolidaActiva(colIzqDestino, f)) {
-          return (colIzqDestino + 1) * ANCHO_BLOQUE;
-        }
-      }
+        codigoSala = generarCodigoSala();
+        document.getElementById('loginSalaNueva').style.display = 'block';
+        const link = window.location.origin + window.location.pathname + '?sala=' + codigoSala;
+        document.getElementById('textoLinkSala').textContent = 'Comparte este link con tus amigos: ' + link;
     }
+}
 
-    return xDestino;
-  }
+document.getElementById('btnEntrar').addEventListener('click', entrarAPartida);
+document.getElementById('inputNombre').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') entrarAPartida();
+});
 
-  function moverConColisionYArriba(x, yActual, deltaY) {
-    let yDestino = yActual + deltaY;
-
-    const colIzq = Math.floor(x / ANCHO_BLOQUE);
-    const colDer = Math.floor((x + TAMANO_JUGADOR - 1) / ANCHO_BLOQUE);
-    const filaDestino = filaDesdeY(yDestino);
-
-    for (let c = colIzq; c <= colDer; c++) {
-      if (celdaSolidaActiva(c, filaDestino)) {
-        const topeBloque = YPASTO + (filaDestino + 1) * ALTO_CAPA;
-        return { y: topeBloque, golpeoTecho: true };
-      }
-    }
-
-    return { y: yDestino, golpeoTecho: false };
-  }
-
-  function obtenerSueloDebajoDeHitbox(xActual, yActual) {
-    const colIzq = Math.floor(xActual / ANCHO_BLOQUE);
-    const colDer = Math.floor((xActual + TAMANO_JUGADOR - 1) / ANCHO_BLOQUE);
-    const filaActual = filaDesdeY(yActual);
-
-    let mejorTope = ALTO_ESCENARIO;
-
-    for (let c = colIzq; c <= colDer; c++) {
-      for (let f = filaActual; f < NUM_CAPAS; f++) {
-        if (celdaSolidaActiva(c, f)) {
-          const topeBloque = YPASTO + f * ALTO_CAPA;
-          if (topeBloque < mejorTope && topeBloque >= yActual) {
-            mejorTope = topeBloque;
-          }
-          break;
-        }
-      }
-    }
-
-    return mejorTope;
-  }
-
-  function actualizarCamara() {
-    const anchoVistaMundo = ANCHO_VISIBLE / ZOOM_VISTA;
-    const altoVistaMundo = ALTO_ESCENARIO / ZOOM_VISTA;
-
-    let camaraX = posX + TAMANO_JUGADOR / 2 - anchoVistaMundo / 2;
-    camaraX = Math.max(0, Math.min(camaraX, ANCHO_MUNDO - anchoVistaMundo));
-
-    let camaraY = posY + TAMANO_JUGADOR / 2 - altoVistaMundo / 2 + offsetCamaraY;
-    const minCamaraY = Y_TOPE_MUNDO;
-    const maxCamaraY = Y_FONDO_MUNDO - altoVistaMundo;
-    camaraY = Math.max(minCamaraY, Math.min(camaraY, maxCamaraY));
-
-    camara.style.transform = 'scale(' + ZOOM_VISTA + ') translate(-' + camaraX + 'px, -' + camaraY + 'px)';
-  }
-
-  function actualizarJuego() {
-    if (!jugadorBloqueado) {
-      const velocidad = teclas.control ? VELOCIDAD_BASE * MULTIPLICADOR_CORRER : VELOCIDAD_BASE;
-
-      if (teclas.a) posX = moverConColisionX(posX, posY, -velocidad);
-      if (teclas.d) posX = moverConColisionX(posX, posY, velocidad);
-
-      if (teclas.espacio && enElSuelo) {
-        velocidadY = -FUERZA_SALTO;
-        enElSuelo = false;
-      }
-    }
-
-    velocidadY += GRAVEDAD;
-
-    if (velocidadY < 0) {
-      const resultado = moverConColisionYArriba(posX, posY, velocidadY);
-      posY = resultado.y;
-      if (resultado.golpeoTecho) velocidadY = 0;
-    } else {
-      let nuevoY = posY + velocidadY;
-      const limiteSuelo = obtenerSueloDebajoDeHitbox(posX, posY) - TAMANO_JUGADOR;
-
-      if (nuevoY >= limiteSuelo) {
-        nuevoY = limiteSuelo;
-        velocidadY = 0;
-        enElSuelo = true;
-      } else {
-        enElSuelo = false;
-      }
-      posY = nuevoY;
-    }
-
-    if (posX < 0) posX = 0;
-    if (posX > ANCHO_MUNDO - TAMANO_JUGADOR) posX = ANCHO_MUNDO - TAMANO_JUGADOR;
-
-    jugador.style.left = posX + 'px';
-    jugador.style.top = posY + 'px';
-
-    actualizarCamara();
-
-    requestAnimationFrame(actualizarJuego);
-  }
-
-  actualizarJuego();
-
-  contenedorCapas.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    if (jugadorBloqueado) return;
-
-    const elementoBajoMouse = e.target;
-    if (!elementoBajoMouse.classList.contains('bloque')) return;
-
-    const idx = parseInt(elementoBajoMouse.dataset.idxBloque, 10);
-    const bloque = bloques[idx];
-    if (!bloque || !bloque.activo || !bloque.esRompible) return;
-
-    const centroX = posX + TAMANO_JUGADOR / 2;
-    const colJugador = Math.floor(centroX / ANCHO_BLOQUE);
-    const pieY = posY + TAMANO_JUGADOR;
-
-    const columnasAlcanzables = [colJugador, colJugador - 1, colJugador + 1];
-    const MARGEN = 45;
-    const bordeSuperior = bloque.y;
-    const bordeInferior = bloque.y + ALTO_CAPA;
-    const alcanzableVertical = pieY >= bordeSuperior - MARGEN && posY <= bordeInferior + MARGEN;
-
-    if (columnasAlcanzables.indexOf(bloque.col) === -1 || !alcanzableVertical) return;
-
-    const rectEscenario = escenario.getBoundingClientRect();
-    const clickX = e.clientX - rectEscenario.left;
-    const clickY = e.clientY - rectEscenario.top;
-
-    menuBloque.style.left = clickX + 'px';
-    menuBloque.style.top = clickY + 'px';
-    menuBloque.style.display = 'block';
-    menuBloque.dataset.bloqueObjetivo = idx;
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!menuBloque.contains(e.target)) menuBloque.style.display = 'none';
-  });
-
-  opcionRetirarBloque.addEventListener('click', () => {
-    const indice = parseInt(menuBloque.dataset.bloqueObjetivo, 10);
-    const bloque = bloques[indice];
-    menuBloque.style.display = 'none';
-    if (!bloque || !bloque.activo) return;
-
-    iniciarRetiroBloque(bloque);
-  });
-
-  let cancelarOperacionActiva = null;
-
-  botonCancelarPanel.addEventListener('click', () => {
-    if (cancelarOperacionActiva) {
-      cancelarOperacionActiva();
-    }
-  });
-
-  function iniciarRetiroBloque(bloque) {
-    jugadorBloqueado = true;
-    const tiempoRetiro = TIEMPOS_RETIRO[bloque.tipoImagen] || 5000;
-    let cancelado = false;
-
-    botonCancelarPanel.classList.add('visible');
-    cancelarOperacionActiva = function() {
-      cancelado = true;
-    };
-
-    const barraCont = document.createElement('div');
-    barraCont.className = 'barra-progreso-cont';
-    barraCont.style.left = bloque.x + (ANCHO_BLOQUE - 40) / 2 + 'px';
-    barraCont.style.top = (bloque.y - 12) + 'px';
-
-    const barraRelleno = document.createElement('div');
-    barraRelleno.className = 'barra-progreso-relleno';
-    barraCont.appendChild(barraRelleno);
-    contenedorCapas.appendChild(barraCont);
-
-    const inicio = Date.now();
-
-    function actualizarBarra() {
-      if (cancelado) {
-        barraCont.remove();
-        botonCancelarPanel.classList.remove('visible');
-        cancelarOperacionActiva = null;
-        jugadorBloqueado = false;
+function entrarAPartida() {
+    const nombre = document.getElementById('inputNombre').value.trim();
+    if (!nombre) {
+        document.getElementById('inputNombre').focus();
         return;
-      }
+    }
+    miNombre = nombre.substring(0, 14);
 
-      const transcurrido = Date.now() - inicio;
-      const porcentaje = Math.min(100, (transcurrido / tiempoRetiro) * 100);
-      barraRelleno.style.width = porcentaje + '%';
+    document.getElementById('panelLogin').style.display = 'none';
+    document.getElementById('hud').style.display = 'flex';
+    document.getElementById('hud2').style.display = 'block';
+    document.getElementById('wrapper').style.display = 'block';
 
-      if (transcurrido >= tiempoRetiro) {
-        bloque.activo = false;
-        bloque.el.remove();
-        barraCont.remove();
-        botonCancelarPanel.classList.remove('visible');
-        cancelarOperacionActiva = null;
-        jugadorBloqueado = false;
-        agregarAlInventario('item_' + bloque.tipoImagen, 'imagenes/items/item_' + bloque.tipoImagen + '.png', CANTIDAD_POR_BLOQUE);
-        return;
-      }
+    // Actualiza la URL para que quede el codigo de sala (por si el usuario
+    // creo la sala y quiere copiar el link despues)
+    const nuevaUrl = window.location.origin + window.location.pathname + '?sala=' + codigoSala;
+    window.history.replaceState({}, '', nuevaUrl);
 
-      requestAnimationFrame(actualizarBarra);
+    conectarAFirebase();
+}
+
+// ==================== CONEXION A FIREBASE ====================
+function conectarAFirebase() {
+    refSala = db.ref('salas/' + codigoSala);
+    refJugadores = refSala.child('jugadores');
+    refZombies = refSala.child('zombies');
+    refPuertas = refSala.child('puertas');
+    refCajasMun = refSala.child('cajasMunicion');
+    refCajasRep = refSala.child('cajasReparacion');
+    refEstado = refSala.child('estado');
+    refBullets = refSala.child('bullets');
+
+    // Decide quien es el host: el primero en escribir su timestamp de union gana.
+    // Usamos una transaccion sobre estado/hostId para evitar carreras entre
+    // 2 jugadores que entran casi al mismo tiempo.
+    refEstado.child('hostId').transaction((actual) => {
+        if (actual === null) return MI_ID; // nadie es host todavia, me postulo
+        return actual; // ya hay host, no lo piso
+    }, (error, comprometido, snapshot) => {
+        esHost = snapshot.val() === MI_ID;
+
+        if (esHost) {
+            inicializarEstadoDeSalaComoHost();
+        }
+
+        // Sea host o no, cada cliente arma su copia local del laberinto
+        // (deterministico, no depende de la red) y arranca su jugador.
+        maze = crearLaberinto();
+
+        // Elegir color: contamos cuantos jugadores ya hay para asignar el
+        // siguiente color disponible de la lista.
+        refJugadores.once('value', (snap) => {
+            const cantidadActual = snap.numChildren();
+            miColor = COLORES_JUGADORES[cantidadActual % COLORES_JUGADORES.length];
+
+            // Posicion inicial: cada jugador arranca en el pasillo central,
+            // con un pequeño offset para no aparecer todos apilados.
+            const offset = cantidadActual * 30;
+            miJugador.x = 9 * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE) / 2 + offset;
+            miJugador.y = 5 * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE) / 2;
+            miJugador.nombre = miNombre;
+            miJugador.color = miColor;
+
+            publicarMiEstado();
+            escucharJugadores();
+            escucharZombies();
+            escucharPuertas();
+            escucharCajas();
+            escucharBullets();
+            escucharEstado();
+
+            // Si el jugador se desconecta (cierra pestaña), lo removemos de la sala
+            refJugadores.child(MI_ID).onDisconnect().remove();
+            if (esHost) {
+                // Si el host se va, liberamos el puesto para que otro lo tome
+                refEstado.child('hostId').onDisconnect().remove();
+            }
+
+            cajasMunicion = POSICIONES_MUNICION.map((p, i) => ({ ...p, id: 'm' + i, recogida: false }));
+            cajasReparacion = ESQUINAS_REPARACION.map((p, i) => ({ x: p[0], y: p[1], id: 'r' + i, reparada: false }));
+
+            iniciarGameLoop();
+        });
+    });
+}
+
+function inicializarEstadoDeSalaComoHost() {
+    refEstado.once('value', (snap) => {
+        if (snap.val() && snap.val().tiempoInicio) return; // la sala ya estaba inicializada
+
+        refEstado.update({
+            tiempoInicio: firebase.database.ServerValue.TIMESTAMP,
+            ultimoSpawn: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        // El host crea el estado inicial de zombies, puertas y cajas para toda la sala
+        const zombiesIniciales = {};
+        [ESQUINAS_SPAWN[0], ESQUINAS_SPAWN[3]].forEach((esquina, i) => {
+            const pos = celdaCentroPixel(esquina[0], esquina[1], ZOMBIE_SIZE);
+            zombiesIniciales['z' + i] = {
+                x: pos.x, y: pos.y,
+                dirX: 0, dirY: 1,
+                speed: (1.6 + Math.random() * 0.5) * 1.25,
+                vida: ZOMBIE_VIDA_MAXIMA,
+                esperandoPuerta: null
+            };
+        });
+        refZombies.set(zombiesIniciales);
+
+        const puertasIniciales = {};
+        puertasLocal.forEach(p => {
+            puertasIniciales[p.id] = { x: p.x, y: p.y, dir: p.dir, abierta: false };
+        });
+        refPuertas.set(puertasIniciales);
+
+        const cajasMunIniciales = {};
+        POSICIONES_MUNICION.forEach((p, i) => {
+            cajasMunIniciales['m' + i] = { x: p.x, y: p.y, recogida: false };
+        });
+        refCajasMun.set(cajasMunIniciales);
+
+        const cajasRepIniciales = {};
+        ESQUINAS_REPARACION.forEach((p, i) => {
+            cajasRepIniciales['r' + i] = { x: p[0], y: p[1], reparada: false, reparandoPor: null, progresoDesde: null };
+        });
+        refCajasRep.set(cajasRepIniciales);
+    });
+}
+
+// ==================== PUBLICAR MI PROPIO ESTADO ====================
+function publicarMiEstado() {
+    refJugadores.child(MI_ID).set({
+        nombre: miJugador.nombre,
+        color: miJugador.color,
+        x: miJugador.x,
+        y: miJugador.y,
+        dirX: miJugador.dir.x,
+        dirY: miJugador.dir.y,
+        vida: miJugador.vida,
+        municion: miJugador.municion,
+        kills: miJugador.kills,
+        ultimoGolpe: miJugador.ultimoGolpe
+    });
+}
+
+// Publicamos posicion/estado unas ~15 veces por segundo (no en cada frame,
+// para no saturar Firebase con escrituras)
+setInterval(() => {
+    if (!refJugadores) return;
+    refJugadores.child(MI_ID).update({
+        x: miJugador.x,
+        y: miJugador.y,
+        dirX: miJugador.dir.x,
+        dirY: miJugador.dir.y,
+        vida: miJugador.vida,
+        municion: miJugador.municion,
+        kills: miJugador.kills,
+        ultimoGolpe: miJugador.ultimoGolpe
+    });
+}, 66);
+
+// ==================== ESCUCHAR CAMBIOS DE OTROS JUGADORES ====================
+function escucharJugadores() {
+    refJugadores.on('value', (snap) => {
+        const datos = snap.val() || {};
+        otrosJugadores = {};
+        for (const id in datos) {
+            if (id === MI_ID) continue;
+            otrosJugadores[id] = datos[id];
+        }
+        actualizarListaJugadores(datos);
+    });
+}
+
+function actualizarListaJugadores(datos) {
+    const cont = document.getElementById('listaJugadores');
+    let html = '<b>Jugadores:</b>';
+    for (const id in datos) {
+        const j = datos[id];
+        const esYo = id === MI_ID ? ' (tú)' : '';
+        html += `<div style="color:${j.color}">● ${j.nombre}${esYo} - ${Math.max(j.vida, 0)}❤</div>`;
+    }
+    cont.innerHTML = html;
+}
+
+// ==================== ESCUCHAR ZOMBIES (el host los simula, todos los leen) ====================
+function escucharZombies() {
+    refZombies.on('value', (snap) => {
+        const datos = snap.val() || {};
+        zombies = Object.keys(datos).map(id => ({
+            id,
+            pos: { x: datos[id].x, y: datos[id].y },
+            dir: { x: datos[id].dirX, y: datos[id].dirY },
+            speed: datos[id].speed,
+            vida: datos[id].vida,
+            esperandoPuertaDesde: datos[id].esperandoPuerta,
+            path: [] // el path solo lo necesita el host, se recalcula localmente si esHost
+        }));
+    });
+}
+
+// ==================== ESCUCHAR PUERTAS (cualquiera las abre/cierra) ====================
+function escucharPuertas() {
+    refPuertas.on('value', (snap) => {
+        const datos = snap.val() || {};
+        puertasLocal = Object.keys(datos).map(id => ({ id, ...datos[id] }));
+    });
+}
+
+// ==================== ESCUCHAR CAJAS ====================
+function escucharCajas() {
+    refCajasMun.on('value', (snap) => {
+        const datos = snap.val() || {};
+        cajasMunicion = Object.keys(datos).map(id => ({ id, ...datos[id] }));
+    });
+    refCajasRep.on('value', (snap) => {
+        const datos = snap.val() || {};
+        cajasReparacion = Object.keys(datos).map(id => ({ id, ...datos[id] }));
+    });
+}
+
+// ==================== ESCUCHAR BALAS DE OTROS JUGADORES ====================
+let balasAjenasVistas = new Set();
+function escucharBullets() {
+    refBullets.on('child_added', (snap) => {
+        const b = snap.val();
+        if (b.autor === MI_ID) return; // las mias ya las tengo localmente
+        if (balasAjenasVistas.has(snap.key)) return;
+        balasAjenasVistas.add(snap.key);
+        bullets.push({ x: b.x, y: b.y, dx: b.dx, dy: b.dy, autor: b.autor, remoto: true, key: snap.key });
+    });
+    refBullets.on('child_removed', (snap) => {
+        bullets = bullets.filter(b => b.key !== snap.key);
+        balasAjenasVistas.delete(snap.key);
+    });
+}
+
+// ==================== ESCUCHAR ESTADO GENERAL (tiempo, victoria) ====================
+function escucharEstado() {
+    refEstado.on('value', (snap) => {
+        const datos = snap.val() || {};
+        if (datos.tiempoInicio) tiempoInicio = datos.tiempoInicio;
+        if (datos.juegoTerminado && !gameOver && !victory) {
+            if (datos.resultado === 'victoria') {
+                victory = true;
+                mostrarOverlay('GANASTE', datos.mensajeResultado || 'Partida ganada', '#66ff66');
+            } else {
+                gameOver = true;
+                mostrarOverlay('GAME OVER', datos.mensajeResultado || 'La partida terminó', '#ff4444');
+            }
+        }
+    });
+}
+
+// ==================== HUD ====================
+function actualizarHud() {
+    document.getElementById('vida').textContent = `Vida: ${Math.max(miJugador.vida, 0)} / ${VIDA_MAXIMA}`;
+    document.getElementById('arma').textContent = `Arma: ${miJugador.municion} balas (R para recargar)`;
+    document.getElementById('kills').textContent = `Zombies eliminados: ${miJugador.kills}`;
+    const reparadas = cajasReparacion.filter(c => c.reparada).length;
+    document.getElementById('reparaciones').textContent = `Cajas reparadas: ${reparadas} / 4`;
+}
+
+function actualizarTiempoHud() {
+    if (!tiempoInicio) return;
+    const restante = Math.max(TIEMPO_LIMITE_MS - (Date.now() - tiempoInicio), 0);
+    const totalSeg = Math.ceil(restante / 1000);
+    const min = Math.floor(totalSeg / 60);
+    const seg = totalSeg % 60;
+    document.getElementById('tiempo').textContent = `Tiempo: ${min}:${seg.toString().padStart(2, '0')}`;
+
+    // Solo el host declara la victoria por tiempo, para que no se dispare 3 veces
+    if (esHost && restante <= 0 && !gameOver && !victory) {
+        declararResultado('victoria', `Sobrevivieron 2 minutos.`);
+    }
+}
+
+// ==================== COLISIONES CON PAREDES Y PUERTAS ====================
+function colisionaConPared(pos, size) {
+    const xs = [pos.x, pos.x + size];
+    const ys = [pos.y, pos.y + size];
+    const grosorPared = 8;
+
+    for (const x of xs) {
+        for (const y of ys) {
+            if (x < 0 || y < 0 || x >= MAZE_COLS * CELL_SIZE || y >= MAZE_ROWS * CELL_SIZE) return true;
+
+            const cx = Math.floor(x / CELL_SIZE);
+            const cy = Math.floor(y / CELL_SIZE);
+            const celda = maze[cx][cy];
+
+            const localX = x - cx * CELL_SIZE;
+            const localY = y - cy * CELL_SIZE;
+
+            if (celda.n && localY < grosorPared) return true;
+            if (celda.s && localY > CELL_SIZE - grosorPared) return true;
+            if (celda.w && localX < grosorPared) return true;
+            if (celda.e && localX > CELL_SIZE - grosorPared) return true;
+        }
+    }
+    return false;
+}
+
+function colisionaConPuertaCerrada(pos, size) {
+    const cxCentro = pos.x + size / 2;
+    const cyCentro = pos.y + size / 2;
+
+    for (const p of puertasLocal) {
+        if (p.abierta) continue;
+
+        let doorX, doorY, horizontal;
+        if (p.dir === 'n') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = p.y * CELL_SIZE; horizontal = true; }
+        else if (p.dir === 's') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = (p.y + 1) * CELL_SIZE; horizontal = true; }
+        else if (p.dir === 'e') { doorX = (p.x + 1) * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; horizontal = false; }
+        else { doorX = p.x * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; horizontal = false; }
+
+        const mitad = CELL_SIZE / 2;
+        if (horizontal) {
+            if (Math.abs(cyCentro - doorY) < size / 2 + 4 && Math.abs(cxCentro - doorX) < mitad) return true;
+        } else {
+            if (Math.abs(cxCentro - doorX) < size / 2 + 4 && Math.abs(cyCentro - doorY) < mitad) return true;
+        }
+    }
+    return false;
+}
+
+function intentarMover(pos, dx, dy, size) {
+    const nuevoX = { x: pos.x + dx, y: pos.y };
+    if (!colisionaConPared(nuevoX, size) && !colisionaConPuertaCerrada(nuevoX, size)) pos.x = nuevoX.x;
+
+    const nuevoY = { x: pos.x, y: pos.y + dy };
+    if (!colisionaConPared(nuevoY, size) && !colisionaConPuertaCerrada(nuevoY, size)) pos.y = nuevoY.y;
+}
+
+function puertaCercana() {
+    const centro = { x: miJugador.x + PLAYER_SIZE / 2, y: miJugador.y + PLAYER_SIZE / 2 };
+    const DIST_APERTURA = CELL_SIZE * 0.8;
+
+    let mejor = null, mejorDist = Infinity;
+    for (const p of puertasLocal) {
+        let doorX, doorY;
+        if (p.dir === 'n') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = p.y * CELL_SIZE; }
+        else if (p.dir === 's') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = (p.y + 1) * CELL_SIZE; }
+        else if (p.dir === 'e') { doorX = (p.x + 1) * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; }
+        else { doorX = p.x * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; }
+
+        const dist = Math.sqrt((centro.x - doorX) ** 2 + (centro.y - doorY) ** 2);
+        if (dist < DIST_APERTURA && dist < mejorDist) { mejor = p; mejorDist = dist; }
+    }
+    return mejor;
+}
+
+// ==================== INPUT ====================
+window.addEventListener('keydown', (e) => {
+    keysDown.add(e.code);
+    if (e.code === 'Space') {
+        e.preventDefault();
+        if (gameOver || victory) return;
+
+        const puerta = puertaCercana();
+        if (puerta) {
+            refPuertas.child(puerta.id).update({ abierta: !puerta.abierta });
+        }
+    }
+    if (e.code === 'KeyR') {
+        if (!gameOver && !victory) recargar();
+    }
+});
+window.addEventListener('keyup', (e) => keysDown.delete(e.code));
+
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+canvas.addEventListener('mousedown', (e) => {
+    if (e.button !== 2) return;
+    disparar();
+});
+
+function manejarInput() {
+    if (gameOver || victory) return;
+
+    let dx = 0, dy = 0;
+    if (keysDown.has('KeyW') || keysDown.has('ArrowUp')) dy -= 1;
+    if (keysDown.has('KeyS') || keysDown.has('ArrowDown')) dy += 1;
+    if (keysDown.has('KeyA') || keysDown.has('ArrowLeft')) dx -= 1;
+    if (keysDown.has('KeyD') || keysDown.has('ArrowRight')) dx += 1;
+
+    if (dx !== 0 || dy !== 0) {
+        const len = Math.sqrt(dx * dx + dy * dy);
+        dx /= len; dy /= len;
+        miJugador.dir = { x: dx, y: dy };
+        intentarMover(miJugador, dx * PLAYER_SPEED, dy * PLAYER_SPEED, PLAYER_SIZE);
     }
 
-    actualizarBarra();
-  }
+    const mensaje = document.getElementById('mensajePuerta');
+    mensaje.style.display = puertaCercana() ? 'block' : 'none';
+}
 
-  let pasosDeHora = 0;
-  const PASOS_POR_HORA = 12;
+// ==================== IA DE ZOMBIES (SOLO el host la ejecuta y la publica) ====================
+function zombieCercaDePuerta(zPos) {
+    const centro = { x: zPos.x + ZOMBIE_SIZE / 2, y: zPos.y + ZOMBIE_SIZE / 2 };
+    const DIST = CELL_SIZE * 0.65;
 
-  function actualizarCicloDia() {
-    pasosDeHora = (pasosDeHora + 1) % (24 * PASOS_POR_HORA);
+    for (const p of puertasLocal) {
+        if (p.abierta) continue;
+        let doorX, doorY;
+        if (p.dir === 'n') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = p.y * CELL_SIZE; }
+        else if (p.dir === 's') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = (p.y + 1) * CELL_SIZE; }
+        else if (p.dir === 'e') { doorX = (p.x + 1) * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; }
+        else { doorX = p.x * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; }
 
-    const totalMinutos = pasosDeHora * 5;
-    const horaEntera = (6 + Math.floor(totalMinutos / 60)) % 24;
-    const minutos = totalMinutos % 60;
+        const dist = Math.sqrt((centro.x - doorX) ** 2 + (centro.y - doorY) ** 2);
+        if (dist < DIST) return p;
+    }
+    return null;
+}
 
-    const horaTexto = (horaEntera < 10 ? '0' : '') + horaEntera + ':' + (minutos < 10 ? '0' : '') + minutos;
-    relojEl.textContent = horaTexto;
+// Encuentra al jugador vivo mas cercano a un zombie, entre TODOS los jugadores conectados
+function jugadorMasCercano(zPos) {
+    let mejor = null, mejorDist = Infinity;
 
-    escenario.classList.remove('dia', 'tarde', 'noche');
-    if (horaEntera >= 6 && horaEntera < 12) {
-      escenario.classList.add('dia');
-    } else if (horaEntera >= 12 && horaEntera < 18) {
-      escenario.classList.add('tarde');
+    const candidatos = [{ id: MI_ID, x: miJugador.x, y: miJugador.y, vida: miJugador.vida }];
+    for (const id in otrosJugadores) {
+        candidatos.push({ id, x: otrosJugadores[id].x, y: otrosJugadores[id].y, vida: otrosJugadores[id].vida });
+    }
+
+    for (const j of candidatos) {
+        if (j.vida <= 0) continue;
+        const dx = (j.x + PLAYER_SIZE / 2) - (zPos.x + ZOMBIE_SIZE / 2);
+        const dy = (j.y + PLAYER_SIZE / 2) - (zPos.y + ZOMBIE_SIZE / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < mejorDist) { mejorDist = dist; mejor = { ...j, dist }; }
+    }
+    return mejor;
+}
+
+const ZOMBIE_DIST_PRIORIZAR_ATAQUE = CELL_SIZE * 1.4;
+let zombiesInternos = {}; // estado extendido (path, timers) que solo el host necesita
+
+function actualizarZombiesComoHost() {
+    for (const z of zombies) {
+        if (!zombiesInternos[z.id]) {
+            zombiesInternos[z.id] = { path: [], pathTimer: 0, esperandoPuertaDesde: z.esperandoPuertaDesde || null };
+        }
+        const interno = zombiesInternos[z.id];
+        const objetivo = jugadorMasCercano(z.pos);
+
+        if (!objetivo) continue; // no hay jugadores vivos
+
+        const jugadorCerca = objetivo.dist < ZOMBIE_DIST_PRIORIZAR_ATAQUE;
+
+        const puertaFrente = jugadorCerca ? null : zombieCercaDePuerta(z.pos);
+        if (puertaFrente) {
+            if (interno.esperandoPuertaDesde === null) {
+                interno.esperandoPuertaDesde = Date.now();
+            } else if (Date.now() - interno.esperandoPuertaDesde >= ZOMBIE_TIEMPO_ABRIR_PUERTA) {
+                refPuertas.child(puertaFrente.id).update({ abierta: true });
+                interno.esperandoPuertaDesde = null;
+                interno.pathTimer = 0;
+            }
+            refZombies.child(z.id).update({ esperandoPuerta: interno.esperandoPuertaDesde });
+            continue;
+        } else {
+            if (interno.esperandoPuertaDesde !== null) {
+                interno.esperandoPuertaDesde = null;
+                refZombies.child(z.id).update({ esperandoPuerta: null });
+            }
+        }
+
+        let dx, dy;
+
+        if (jugadorCerca) {
+            dx = (objetivo.x + PLAYER_SIZE / 2) - (z.pos.x + ZOMBIE_SIZE / 2);
+            dy = (objetivo.y + PLAYER_SIZE / 2) - (z.pos.y + ZOMBIE_SIZE / 2);
+        } else {
+            interno.pathTimer--;
+            if (interno.pathTimer <= 0) {
+                const zCelda = pixelACelda(z.pos, ZOMBIE_SIZE);
+                const pCelda = pixelACelda({ x: objetivo.x, y: objetivo.y }, PLAYER_SIZE);
+                interno.path = buscarCamino(maze, zCelda, pCelda);
+                interno.pathTimer = 6;
+            }
+
+            let hayObjetivo = false;
+            if (interno.path.length > 0) {
+                const obj = interno.path[0];
+                const objPixel = celdaCentroPixel(obj[0], obj[1], ZOMBIE_SIZE);
+                dx = objPixel.x - z.pos.x;
+                dy = objPixel.y - z.pos.y;
+                hayObjetivo = true;
+
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < z.speed) interno.path.shift();
+            }
+
+            if (!hayObjetivo) {
+                dx = (objetivo.x + PLAYER_SIZE / 2) - (z.pos.x + ZOMBIE_SIZE / 2);
+                dy = (objetivo.y + PLAYER_SIZE / 2) - (z.pos.y + ZOMBIE_SIZE / 2);
+            }
+        }
+
+        const dist2 = Math.sqrt(dx * dx + dy * dy);
+        if (dist2 > 0.1) {
+            const dirX = dx / dist2, dirY = dy / dist2;
+            const movX = { x: z.pos.x + dirX * z.speed, y: z.pos.y };
+            const movY = { x: z.pos.x, y: z.pos.y + dirY * z.speed };
+
+            let nx = z.pos.x, ny = z.pos.y;
+            if (!colisionaConPared(movX, ZOMBIE_SIZE) && !colisionaConPuertaCerrada(movX, ZOMBIE_SIZE)) nx = movX.x;
+            if (!colisionaConPared(movY, ZOMBIE_SIZE) && !colisionaConPuertaCerrada(movY, ZOMBIE_SIZE)) ny = movY.y;
+
+            refZombies.child(z.id).update({ x: nx, y: ny, dirX, dirY });
+            z.pos.x = nx; z.pos.y = ny; // actualizamos localmente tambien para la separacion de abajo
+        }
+
+        // Ataque: si el zombie esta encima de ALGUN jugador, le baja vida
+        // (el host arbitra el daño de todos, pero cada cliente reporta su
+        // propio cooldown de 1 segundo para que sea exacto en su pantalla)
+    }
+
+    aplicarSeparacionEntreZombiesHost();
+}
+
+function aplicarSeparacionEntreZombiesHost() {
+    const DISTANCIA_MINIMA = ZOMBIE_SIZE * 0.9;
+
+    for (let i = 0; i < zombies.length; i++) {
+        for (let j = i + 1; j < zombies.length; j++) {
+            const a = zombies[i], b = zombies[j];
+            const dx = a.pos.x - b.pos.x;
+            const dy = a.pos.y - b.pos.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < DISTANCIA_MINIMA && dist > 0.01) {
+                const empuje = (DISTANCIA_MINIMA - dist) / 2;
+                const nx = dx / dist, ny = dy / dist;
+
+                const aX = a.pos.x + nx * empuje, aY = a.pos.y + ny * empuje;
+                const bX = b.pos.x - nx * empuje, bY = b.pos.y - ny * empuje;
+
+                refZombies.child(a.id).update({ x: aX, y: aY });
+                refZombies.child(b.id).update({ x: bX, y: bY });
+            }
+        }
+    }
+}
+
+function spawnearZombieEnEsquinaHost() {
+    const esquina = ESQUINAS_SPAWN[Math.floor(Math.random() * ESQUINAS_SPAWN.length)];
+    const pos = celdaCentroPixel(esquina[0], esquina[1], ZOMBIE_SIZE);
+    const nuevoId = 'z' + Date.now() + Math.floor(Math.random() * 1000);
+    refZombies.child(nuevoId).set({
+        x: pos.x, y: pos.y,
+        dirX: 0, dirY: 1,
+        speed: (1.6 + Math.random() * 0.5) * 1.25,
+        vida: ZOMBIE_VIDA_MAXIMA,
+        esperandoPuerta: null
+    });
+}
+
+// ==================== DISPAROS Y MUNICION (cada cliente simula sus propias balas) ====================
+function disparar() {
+    if (gameOver || victory) return;
+    if (miJugador.municion <= 0) return;
+
+    miJugador.municion--;
+    actualizarHud();
+
+    const centro = { x: miJugador.x + PLAYER_SIZE / 2, y: miJugador.y + PLAYER_SIZE / 2 };
+    const nuevaBala = { x: centro.x, y: centro.y, dx: miJugador.dir.x, dy: miJugador.dir.y, autor: MI_ID };
+    bullets.push(nuevaBala);
+
+    // Publicamos la bala para que los demas clientes tambien la vean
+    const balaRef = refBullets.push(nuevaBala);
+    nuevaBala.key = balaRef.key;
+    // La borramos de la base de datos luego de 2 segundos (tiempo de vuelo maximo razonable)
+    setTimeout(() => balaRef.remove(), 2000);
+}
+
+function recargar() {
+    miJugador.municion = MUNICION_MAXIMA;
+    actualizarHud();
+}
+
+function actualizarBalas() {
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+
+        // Las balas remotas (de otros jugadores) solo se dibujan y se
+        // chequean contra zombies si YO soy el host (para no duplicar el
+        // daño); las propias siempre las simulo yo.
+        if (b.remoto) {
+            // Solo avanzamos su posicion local para dibujarla suavemente
+            b.x += b.dx * BULLET_SPEED;
+            b.y += b.dy * BULLET_SPEED;
+            continue;
+        }
+
+        const nx = b.x + b.dx * BULLET_SPEED;
+        const ny = b.y + b.dy * BULLET_SPEED;
+
+        if (nx < 0 || ny < 0 || nx >= MAZE_COLS * CELL_SIZE || ny >= MAZE_ROWS * CELL_SIZE
+            || colisionaConPared({ x: nx - BULLET_RADIUS, y: ny - BULLET_RADIUS }, BULLET_RADIUS * 2)
+            || colisionaConPuertaCerrada({ x: nx - BULLET_RADIUS, y: ny - BULLET_RADIUS }, BULLET_RADIUS * 2)) {
+            bullets.splice(i, 1);
+            if (b.key) refBullets.child(b.key).remove();
+            continue;
+        }
+
+        b.x = nx; b.y = ny;
+
+        for (const z of zombies) {
+            const zdx = b.x - (z.pos.x + ZOMBIE_SIZE / 2);
+            const zdy = b.y - (z.pos.y + ZOMBIE_SIZE / 2);
+            if (Math.sqrt(zdx * zdx + zdy * zdy) < ZOMBIE_SIZE / 2 + BULLET_RADIUS) {
+                bullets.splice(i, 1);
+                if (b.key) refBullets.child(b.key).remove();
+
+                // Restamos vida al zombie de forma atomica (varios jugadores
+                // podrian dispararle al mismo tiempo)
+                refZombies.child(z.id).transaction((actual) => {
+                    if (!actual) return actual;
+                    actual.vida = (actual.vida || ZOMBIE_VIDA_MAXIMA) - 1;
+                    return actual;
+                }).then((resultado) => {
+                    if (resultado.committed && resultado.snapshot.val() && resultado.snapshot.val().vida <= 0) {
+                        refZombies.child(z.id).remove();
+                        miJugador.kills++;
+                        actualizarHud();
+                    }
+                });
+                break;
+            }
+        }
+    }
+}
+
+// ==================== RECOGER CAJAS DE MUNICION ====================
+function verificarCajasMunicion() {
+    const centro = { x: miJugador.x + PLAYER_SIZE / 2, y: miJugador.y + PLAYER_SIZE / 2 };
+
+    for (const caja of cajasMunicion) {
+        if (caja.recogida) continue;
+
+        const cajaPixel = celdaCentroPixel(caja.x, caja.y, 20);
+        const cx = cajaPixel.x + 10, cy = cajaPixel.y + 10;
+        const dist = Math.sqrt((centro.x - cx) ** 2 + (centro.y - cy) ** 2);
+
+        if (dist < 22) {
+            // Transaccion para que si 2 jugadores llegan a la vez, solo uno la recoja
+            refCajasMun.child(caja.id).transaction((actual) => {
+                if (!actual || actual.recogida) return actual;
+                actual.recogida = true;
+                return actual;
+            }).then((resultado) => {
+                if (resultado.committed && resultado.snapshot.val() && resultado.snapshot.val().recogida) {
+                    miJugador.municion += MUNICION_POR_CAJA;
+                    actualizarHud();
+                }
+            });
+        }
+    }
+}
+
+// ==================== SISTEMA DE REPARACION DE CAJAS ====================
+function cajaReparacionCercana() {
+    const centro = { x: miJugador.x + PLAYER_SIZE / 2, y: miJugador.y + PLAYER_SIZE / 2 };
+    const DIST_REPARAR = 24;
+
+    for (const caja of cajasReparacion) {
+        if (caja.reparada) continue;
+        const cajaPixel = celdaCentroPixel(caja.x, caja.y, 22);
+        const cx = cajaPixel.x + 11, cy = cajaPixel.y + 11;
+        const dist = Math.sqrt((centro.x - cx) ** 2 + (centro.y - cy) ** 2);
+        if (dist < DIST_REPARAR) return caja;
+    }
+    return null;
+}
+
+function zombieMasCercanoDistancia() {
+    if (zombies.length === 0) return Infinity;
+    const centro = { x: miJugador.x + PLAYER_SIZE / 2, y: miJugador.y + PLAYER_SIZE / 2 };
+    let minDist = Infinity;
+    for (const z of zombies) {
+        const dx = centro.x - (z.pos.x + ZOMBIE_SIZE / 2);
+        const dy = centro.y - (z.pos.y + ZOMBIE_SIZE / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < minDist) minDist = dist;
+    }
+    return minDist;
+}
+
+let progresoReparacionLocal = 0; // tiempo acumulado en ESTA sesion reparando la caja actual
+
+function actualizarReparacion() {
+    const cajaCerca = cajaReparacionCercana();
+    const panel = document.getElementById('panelReparacion');
+    const barra = document.getElementById('barraReparacion');
+    const aviso = document.getElementById('avisoPeligro');
+
+    if (cajaReparandoActual && (!cajaCerca || cajaCerca.id !== cajaReparandoActual.id)) {
+        cajaReparandoActual = null;
+        progresoReparacionLocal = 0;
+    }
+
+    if (cajaCerca && !cajaCerca.reparada) {
+        if (!cajaReparandoActual || cajaReparandoActual.id !== cajaCerca.id) {
+            cajaReparandoActual = cajaCerca;
+            progresoReparacionLocal = 0;
+        }
+
+        progresoReparacionLocal += 16; // ~1 frame a 60fps
+        const progreso = Math.min(progresoReparacionLocal / REPARACION_DURACION_MS, 1);
+
+        panel.style.display = 'block';
+        barra.style.width = (progreso * 100) + '%';
+
+        const distZombie = zombieMasCercanoDistancia();
+        aviso.style.display = distZombie < REPARACION_DIST_ZOMBIE_PELIGRO ? 'block' : 'none';
+
+        if (progreso >= 1) {
+            refCajasRep.child(cajaCerca.id).update({ reparada: true });
+            cajaReparandoActual = null;
+            progresoReparacionLocal = 0;
+            panel.style.display = 'none';
+        }
     } else {
-      escenario.classList.add('noche');
+        panel.style.display = 'none';
     }
-  }
+}
 
-  actualizarCicloDia();
-  setInterval(actualizarCicloDia, 1000);
+// ==================== COLISIONES JUGADOR-ZOMBIE (cooldown de 1 segundo) ====================
+function verificarColisiones() {
+    for (const z of zombies) {
+        const dx = (miJugador.x + PLAYER_SIZE / 2) - (z.pos.x + ZOMBIE_SIZE / 2);
+        const dy = (miJugador.y + PLAYER_SIZE / 2) - (z.pos.y + ZOMBIE_SIZE / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < (PLAYER_SIZE + ZOMBIE_SIZE) / 2.2) {
+            const ahora = Date.now();
+            // COOLDOWN: tras ser atacado, pasa 1 segundo completo antes de
+            // que un zombie pueda volver a hacerte daño.
+            if (ahora - miJugador.ultimoGolpe >= COOLDOWN_GOLPE_MS) {
+                miJugador.ultimoGolpe = ahora;
+                miJugador.vida -= DAÑO_POR_GOLPE;
+                actualizarHud();
+
+                if (miJugador.vida <= 0) {
+                    miJugador.vida = 0;
+                    actualizarHud();
+                    verificarSiTodosMurieron();
+                }
+            }
+            break;
+        }
+    }
+}
+
+function verificarSiTodosMurieron() {
+    // Solo se declara Game Over para toda la sala si TODOS los jugadores
+    // conectados llegaron a 0 de vida (asi el resto puede seguir jugando
+    // y potencialmente reanimar la partida en una version futura).
+    const todosMuertos = miJugador.vida <= 0 &&
+        Object.values(otrosJugadores).every(j => j.vida <= 0);
+
+    if (todosMuertos && esHost) {
+        declararResultado('derrota', 'Todos los jugadores cayeron.');
+    }
+}
+
+function declararResultado(resultado, mensaje) {
+    refEstado.update({
+        juegoTerminado: true,
+        resultado,
+        mensajeResultado: mensaje
+    });
+}
+
+function verificarVictoria() {
+    if (gameOver || victory) return;
+    if (!esHost) return; // solo el host decide y publica la victoria
+
+    const reparadas = cajasReparacion.filter(c => c.reparada).length;
+    if (reparadas >= 4) {
+        declararResultado('victoria', 'Repararon las 4 cajas.');
+        return;
+    }
+
+    if (zombies.length === 0 && (miJugador.kills > 0 || Object.values(otrosJugadores).some(j => j.kills > 0))) {
+        declararResultado('victoria', 'Eliminaron a todos los zombies.');
+    }
+}
+
+function mostrarOverlay(titulo, subtitulo, color) {
+    const overlay = document.getElementById('overlay');
+    const t = document.getElementById('overlayTitle');
+    const s = document.getElementById('overlaySubtitle');
+    t.textContent = titulo;
+    t.style.color = color;
+    s.textContent = subtitulo + ' — Recarga la página para jugar de nuevo';
+    overlay.style.display = 'flex';
+}
+
+// ==================== SPAWN PERIODICO (solo el host lo dispara) ====================
+setInterval(() => {
+    if (!esHost || gameOver || victory) return;
+    spawnearZombieEnEsquinaHost();
+}, INTERVALO_SPAWN_MS);
+
+// ==================== RENDER ====================
+function dibujarFondo() {
+    ctx.fillStyle = '#3a3a40';
+    ctx.fillRect(0, 0, MAZE_COLS * CELL_SIZE, MAZE_ROWS * CELL_SIZE);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= MAZE_COLS; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * CELL_SIZE, 0);
+        ctx.lineTo(x * CELL_SIZE, MAZE_ROWS * CELL_SIZE);
+        ctx.stroke();
+    }
+    for (let y = 0; y <= MAZE_ROWS; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * CELL_SIZE);
+        ctx.lineTo(MAZE_COLS * CELL_SIZE, y * CELL_SIZE);
+        ctx.stroke();
+    }
+}
+
+function dibujarLaberinto() {
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+
+    for (let x = 0; x < MAZE_COLS; x++) {
+        for (let y = 0; y < MAZE_ROWS; y++) {
+            const celda = maze[x][y];
+            const px = x * CELL_SIZE;
+            const py = y * CELL_SIZE;
+
+            ctx.beginPath();
+            if (celda.n) { ctx.moveTo(px, py); ctx.lineTo(px + CELL_SIZE, py); }
+            if (celda.s) { ctx.moveTo(px, py + CELL_SIZE); ctx.lineTo(px + CELL_SIZE, py + CELL_SIZE); }
+            if (celda.w) { ctx.moveTo(px, py); ctx.lineTo(px, py + CELL_SIZE); }
+            if (celda.e) { ctx.moveTo(px + CELL_SIZE, py); ctx.lineTo(px + CELL_SIZE, py + CELL_SIZE); }
+            ctx.stroke();
+        }
+    }
+}
+
+function dibujarPuertas() {
+    for (const p of puertasLocal) {
+        let x1, y1, x2, y2, cx, cy;
+        if (p.dir === 'n') { x1 = p.x * CELL_SIZE; y1 = p.y * CELL_SIZE; x2 = x1 + CELL_SIZE; y2 = y1; cx = x1; cy = y1; }
+        else if (p.dir === 's') { x1 = p.x * CELL_SIZE; y1 = (p.y + 1) * CELL_SIZE; x2 = x1 + CELL_SIZE; y2 = y1; cx = x1; cy = y1; }
+        else if (p.dir === 'e') { x1 = (p.x + 1) * CELL_SIZE; y1 = p.y * CELL_SIZE; x2 = x1; y2 = y1 + CELL_SIZE; cx = x1; cy = y1; }
+        else { x1 = p.x * CELL_SIZE; y1 = p.y * CELL_SIZE; x2 = x1; y2 = y1 + CELL_SIZE; cx = x1; cy = y1; }
+
+        ctx.save();
+
+        if (p.abierta) {
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            if (p.dir === 'n' || p.dir === 's') {
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + 4, cy + (p.dir === 'n' ? -26 : 26));
+            } else {
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + (p.dir === 'e' ? 26 : -26), cy + 4);
+            }
+            ctx.stroke();
+        } else {
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#3a3a00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo((x1 + x2) / 2 - 5, (y1 + y2) / 2 - 5);
+            ctx.lineTo((x1 + x2) / 2 + 5, (y1 + y2) / 2 + 5);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+function dibujarCajasMunicion() {
+    for (const caja of cajasMunicion) {
+        if (caja.recogida) continue;
+
+        const pos = celdaCentroPixel(caja.x, caja.y, 18);
+        const flotacion = Math.sin(performance.now() / 300) * 3;
+
+        ctx.fillStyle = '#8d6e2f';
+        ctx.fillRect(pos.x, pos.y + flotacion, 18, 14);
+        ctx.strokeStyle = '#c9a227';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(pos.x, pos.y + flotacion, 18, 14);
+
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 9px Consolas';
+        ctx.textAlign = 'center';
+        ctx.fillText('+5', pos.x + 9, pos.y + flotacion + 10);
+    }
+}
+
+function dibujarCajasReparacion() {
+    for (const caja of cajasReparacion) {
+        const pos = celdaCentroPixel(caja.x, caja.y, 26);
+        const cx = pos.x + 13, cy = pos.y + 13;
+
+        if (caja.reparada) {
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(pos.x, pos.y, 26, 22);
+            ctx.strokeStyle = '#1a8f4c';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(pos.x, pos.y, 26, 22);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Consolas';
+            ctx.textAlign = 'center';
+            ctx.fillText('✓', cx, cy + 5);
+        } else {
+            const pulso = 0.5 + 0.5 * Math.sin(performance.now() / 300);
+            ctx.fillStyle = `rgba(255, 165, 0, ${0.5 + pulso * 0.3})`;
+            ctx.fillRect(pos.x, pos.y, 26, 22);
+            ctx.strokeStyle = '#ff8c00';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(pos.x, pos.y, 26, 22);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Consolas';
+            ctx.textAlign = 'center';
+            ctx.fillText('🔧', cx, cy + 5);
+        }
+    }
+}
+
+// Dibuja un personaje generico (usado para mi jugador y para los demas,
+// solo cambia el color y si aplica el parpadeo de invulnerabilidad)
+function dibujarPersonaje(x, y, dir, color, nombre, ultimoGolpe) {
+    const cx = x + PLAYER_SIZE / 2;
+    const cy = y + PLAYER_SIZE / 2;
+    const angulo = Math.atan2(dir.y, dir.x);
+
+    const enCooldown = (Date.now() - (ultimoGolpe || 0)) < COOLDOWN_GOLPE_MS;
+    const parpadeoOculto = enCooldown && Math.floor(Date.now() / 100) % 2 === 0;
+
+    if (!parpadeoOculto) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angulo + Math.PI / 2);
+
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.beginPath();
+        ctx.ellipse(0, 2, 10, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.ellipse(0, 2, 9, 11, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffcc99';
+        ctx.beginPath();
+        ctx.arc(0, -8, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(-3, -10);
+        ctx.lineTo(3, -10);
+        ctx.lineTo(0, -18);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // Nombre siempre visible (aunque este parpadeando por invulnerabilidad)
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 10px Consolas';
+    ctx.textAlign = 'center';
+    ctx.fillText(nombre, cx, cy - 24);
+}
+
+function dibujarJugadores() {
+    dibujarPersonaje(miJugador.x, miJugador.y, miJugador.dir, miJugador.color, miJugador.nombre + ' (tú)', miJugador.ultimoGolpe);
+
+    for (const id in otrosJugadores) {
+        const j = otrosJugadores[id];
+        if (j.vida <= 0) continue;
+        dibujarPersonaje(j.x, j.y, { x: j.dirX, y: j.dirY }, j.color, j.nombre, j.ultimoGolpe);
+    }
+}
+
+function dibujarZombie(z) {
+    const cx = z.pos.x + ZOMBIE_SIZE / 2;
+    const cy = z.pos.y + ZOMBIE_SIZE / 2;
+    const angulo = Math.atan2(z.dir.y, z.dir.x);
+    const t = performance.now() / 150;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angulo + Math.PI / 2);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 12, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#3a6b1f';
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    const balanceo = Math.sin(t) * 3;
+
+    ctx.beginPath();
+    ctx.moveTo(-6, 0);
+    ctx.lineTo(-10 + balanceo, -10);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(6, 0);
+    ctx.lineTo(10 - balanceo, -10);
+    ctx.stroke();
+
+    ctx.fillStyle = '#4caf50';
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 10, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#2e5e1a';
+    ctx.beginPath();
+    ctx.ellipse(3, 5, 3, 4, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#6fae52';
+    ctx.beginPath();
+    ctx.arc(0, -9, 6.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ff1111';
+    ctx.beginPath();
+    ctx.arc(-2.5, -10, 1.3, 0, Math.PI * 2);
+    ctx.arc(2.5, -10, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#1b1b1b';
+    ctx.beginPath();
+    ctx.ellipse(0, -6, 2.5, 1.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    const espacioBolita = 8;
+    const inicioX = cx - ((ZOMBIE_VIDA_MAXIMA - 1) * espacioBolita) / 2;
+    for (let i = 0; i < ZOMBIE_VIDA_MAXIMA; i++) {
+        const activa = i < z.vida;
+        ctx.beginPath();
+        ctx.arc(inicioX + i * espacioBolita, cy - 22, 3.2, 0, Math.PI * 2);
+        ctx.fillStyle = activa ? '#4dff4d' : 'rgba(255,255,255,0.15)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+
+    if (z.esperandoPuertaDesde) {
+        const progreso = Math.min((Date.now() - z.esperandoPuertaDesde) / ZOMBIE_TIEMPO_ABRIR_PUERTA, 1);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(cx - 14, cy - 32, 28, 4);
+        ctx.fillStyle = '#ff6b6b';
+        ctx.fillRect(cx - 14, cy - 32, 28 * progreso, 4);
+    }
+}
+
+function dibujarBalas() {
+    ctx.fillStyle = 'yellow';
+    for (const b of bullets) {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, BULLET_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    dibujarFondo();
+    dibujarLaberinto();
+    dibujarPuertas();
+    dibujarCajasMunicion();
+    dibujarCajasReparacion();
+    dibujarBalas();
+    for (const z of zombies) dibujarZombie(z);
+    dibujarJugadores();
+}
+
+// ==================== GAME LOOP ====================
+function iniciarGameLoop() {
+    actualizarHud();
+    requestAnimationFrame(bucleJuego);
+}
+
+function bucleJuego() {
+    if (!gameOver && !victory) {
+        manejarInput();
+        if (esHost) actualizarZombiesComoHost();
+        actualizarBalas();
+        verificarCajasMunicion();
+        actualizarReparacion();
+        verificarColisiones();
+        actualizarTiempoHud();
+        verificarVictoria();
+        publicarMiEstadoRapido();
+    }
+    render();
+    requestAnimationFrame(bucleJuego);
+}
+
+// Publicacion rapida de solo posicion en cada frame se reemplaza por el
+// setInterval de arriba (66ms) para no saturar Firebase; esta funcion
+// queda como no-op intencional por claridad del flujo del game loop.
+function publicarMiEstadoRapido() {}
+
+inicializarLogin();
 </script>
 
 </body>
