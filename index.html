@@ -2,1643 +2,4050 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Zombie Maze - Multijugador</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego Hexagonal - Prototipo</title>
 <style>
-    body {
-        margin: 0;
-        background: #111;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        font-family: Consolas, monospace;
-        color: white;
-    }
-    #hud {
-        display: flex;
-        justify-content: space-between;
-        width: 1100px;
-        padding: 8px 0;
-        font-size: 13px;
-        font-weight: bold;
-        flex-wrap: wrap;
-        gap: 4px;
-    }
-    canvas {
-        background: #2b2b2e;
-        border: 2px solid #555;
-    }
-    #overlay {
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        background: rgba(0,0,0,0.75);
-        text-align: center;
-        z-index: 20;
-    }
-    #overlay h1 { font-size: 44px; margin: 0; }
-    #overlay p { font-size: 16px; }
-    #wrapper { position: relative; }
-    #mensajePuerta {
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0,0,0,0.7);
-        padding: 6px 14px;
-        border-radius: 6px;
-        font-size: 13px;
-        display: none;
-    }
-    #panelReparacion {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0,0,0,0.75);
-        padding: 14px 20px;
-        border-radius: 8px;
-        text-align: center;
-        display: none;
-        min-width: 220px;
-    }
-    #panelReparacion .barraFondo {
-        background: rgba(255,255,255,0.15);
-        height: 14px;
-        border-radius: 7px;
-        overflow: hidden;
-        margin: 8px 0;
-    }
-    #panelReparacion .barraProgreso {
-        background: #ffd700;
-        height: 100%;
-        width: 0%;
-    }
-    #panelReparacion .avisoPeligro {
-        color: #ff5555;
-        font-size: 12px;
-        margin-top: 4px;
-        display: none;
-    }
-    #panelLogin {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: #111;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        z-index: 50;
-    }
-    #panelLogin .caja {
-        background: #222;
-        border: 2px solid #444;
-        border-radius: 10px;
-        padding: 30px 40px;
-        text-align: center;
-        min-width: 320px;
-    }
-    #panelLogin h1 { color: #ffd700; margin-top: 0; }
-    #panelLogin input {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 10px;
-        margin: 8px 0;
-        border-radius: 6px;
-        border: 1px solid #555;
-        background: #333;
-        color: white;
-        font-family: Consolas, monospace;
-        font-size: 14px;
-    }
-    #panelLogin button {
-        width: 100%;
-        padding: 10px;
-        margin-top: 10px;
-        border-radius: 6px;
-        border: none;
-        background: #ffd700;
-        color: #111;
-        font-weight: bold;
-        font-family: Consolas, monospace;
-        font-size: 14px;
-        cursor: pointer;
-    }
-    #panelLogin button:hover { background: #ffe44d; }
-    #panelLogin p {
-        font-size: 13px;
-        opacity: 0.85;
-    }
-    #listaJugadores {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        background: rgba(0,0,0,0.6);
-        border-radius: 6px;
-        padding: 6px 10px;
-        font-size: 12px;
-        text-align: left;
-        z-index: 10;
-    }
-    #listaJugadores div { margin: 2px 0; }
+  :root{
+    --bg: #0e1512;
+    --panel: #16211c;
+    --panel-border: #263a30;
+    --text: #e7efe9;
+    --text-dim: #9db3a6;
+    --accent: #57c785;
+    --accent-dim: #2f5a44;
+    --danger: #d9645a;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    overflow:hidden;
+  }
+  #app{
+    display:flex;
+    width:100vw;
+    height:100vh;
+  }
+  #mapWrap{
+    flex:1;
+    position:relative;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 30% 20%, #1a2620 0%, #0e1512 60%);
+  }
+  canvas{
+    display:block;
+    cursor: pointer;
+  }
+  canvas.grabbing{ cursor: pointer; }
+
+  /* Panel lateral */
+  #sidebar{
+    width: 300px;
+    min-width: 300px;
+    background: var(--panel);
+    border-left: 1px solid var(--panel-border);
+    padding: 18px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    overflow-y:auto;
+  }
+  h1{
+    font-size: 16px;
+    margin: 0 0 2px 0;
+    letter-spacing: .5px;
+    color: var(--text);
+  }
+  .subtitle{
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .card{
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .card h2{
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-dim);
+    margin: 0 0 10px 0;
+  }
+
+  /* Ticks */
+  #ticksRow{
+    display:flex;
+    gap:6px;
+    margin-bottom: 8px;
+  }
+  .tickDot{
+    width: 22px; height:22px;
+    border-radius:50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(87,199,133,.5);
+    transition: all .2s ease;
+  }
+  .tickDot.spent{
+    background: rgba(255,255,255,0.06);
+    box-shadow:none;
+  }
+  /* Ticks extra otorgados por la Torre de Luz durante la noche: se pintan
+     de amarillo para dejar claro que vienen de la iluminación */
+  .tickDot.lightBonus{
+    background: #f2d347;
+    box-shadow: 0 0 8px rgba(242,211,71,.6);
+  }
+  .tickDot.lightBonus.spent{
+    background: rgba(242,211,71,0.15);
+    box-shadow:none;
+  }
+  #ticksLabel{
+    font-size:13px; color:var(--text-dim);
+  }
+  #endTurnBtn{
+    margin-top: 10px;
+    width:100%;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--accent-dim);
+    background: transparent;
+    color: var(--accent);
+    font-size: 13px;
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  #endTurnBtn:hover{
+    background: var(--accent-dim);
+    color: var(--text);
+  }
+
+  /* Acciones */
+  .actionsGrid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .actionBtn{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    padding: 10px 6px;
+    border-radius: 9px;
+    border: 1px solid var(--panel-border);
+    background: rgba(255,255,255,0.02);
+    color: var(--text);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s ease;
+    user-select:none;
+  }
+  .actionBtn .ic{
+    font-size: 18px;
+    line-height:1;
+  }
+  .actionBtn:hover:not(.disabled){
+    border-color: var(--accent-dim);
+    background: rgba(87,199,133,0.08);
+  }
+  .actionBtn.active{
+    border-color: var(--accent);
+    background: rgba(87,199,133,0.16);
+    color: var(--accent);
+  }
+  .actionBtn.disabled{
+    opacity: .35;
+    cursor: not-allowed;
+  }
+
+  /* Inventario */
+  #inventory .row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--panel-border);
+  }
+  #inventory .row:last-child{ border-bottom:none; }
+  #inventory .row b{
+    color: var(--text);
+    font-size: 20px;
+    font-weight: 700;
+  }
+  #inventoryCapRow{
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align:right;
+    margin-top: 4px;
+  }
+  #inventoryCapRow b{ color: var(--text); }
+  .priceTag{
+    font-size: 10px;
+    color: var(--text-dim);
+    opacity: .75;
+  }
+  /* Precios del inventario (💲12 c/u, etc.) resaltados y más grandes que un priceTag común */
+  .invPriceTag{
+    font-size: 13px;
+    font-weight: 700;
+    color: #f2c14e;
+    opacity: 1;
+  }
+
+  /* Barra superior: dinero, día y cronómetro, siempre visibles sobre el mapa */
+  #topBar{
+    position:absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    display:flex;
+    justify-content: flex-start;
+    align-items:center;
+    gap: 10px;
+    pointer-events:none;
+    z-index: 10;
+  }
+  #coinsTopDisplay{
+    background: rgba(14,21,18,0.85);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #f2c14e;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  #dayTopDisplay{
+    background: rgba(14,21,18,0.85);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--text-dim);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  #dayTopDisplay b{ color: var(--text); }
+  #timerTopDisplay{
+    background: rgba(14,21,18,0.85);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--text-dim);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    font-variant-numeric: tabular-nums;
+  }
+  #timerTopDisplay b{ color: var(--text); }
+
+  #btnSettings{
+    background: rgba(14,21,18,0.85);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    width: 36px; height: 36px;
+    font-size: 15px;
+    cursor:pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    pointer-events:auto;
+    transition: all .15s ease;
+  }
+  #btnSettings:hover{
+    background: rgba(30,42,35,0.9);
+    transform: rotate(25deg);
+  }
+
+  /* Modal de opciones */
+  #settingsOverlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,0.55);
+    z-index: 55;
+    align-items:center;
+    justify-content:center;
+  }
+  #settingsOverlay.open{ display:flex; }
+  #settingsModal{
+    width: 300px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  #settingsHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 16px;
+  }
+  #settingsHeader h3{
+    margin:0;
+    font-size: 15px;
+    color: var(--text);
+  }
+  #settingsCloseX{
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 16px;
+    cursor:pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+  }
+  #settingsCloseX:hover{
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+  }
+  #settingsRow{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text);
+  }
+  #settingsRow label{
+    white-space:nowrap;
+  }
+  #volumeSlider{
+    flex:1;
+    accent-color: var(--accent);
+  }
+  #volumeValue{
+    min-width: 38px;
+    text-align:right;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  #turnTopDisplay{
+    background: rgba(14,21,18,0.85);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--text-dim);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    transition: all .3s ease;
+  }
+  #turnTopDisplay.night{
+    color: #f2d98a;
+    border-color: rgba(242,217,138,0.35);
+  }
+
+  /* Fila de bolitas mostrando el progreso de días (1 al 10) */
+  #dayProgressBar{
+    position:absolute;
+    top: 62px;
+    right: 14px;
+    display:flex;
+    gap: 6px;
+    background: rgba(14,21,18,0.85);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 7px 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    z-index: 10;
+  }
+  .dayDot{
+    width: 12px; height:12px;
+    border-radius:50%;
+    background: rgba(255,255,255,0.12);
+    transition: all .25s ease;
+  }
+  .dayDot.past{
+    background: var(--accent-dim);
+  }
+  .dayDot.current{
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(87,199,133,.7);
+    transform: scale(1.2);
+  }
+  .dayDot.rainDay{
+    outline: 2px solid #5aa7d8;
+    outline-offset: 1px;
+  }
+
+  /* Oscurece suavemente el mapa durante el turno Noche, sin dificultar la lectura */
+  #nightOverlay{
+    position:absolute;
+    inset:0;
+    background: rgba(10,14,26,0);
+    pointer-events:none;
+    z-index: 5;
+    transition: background .6s ease;
+  }
+  #nightOverlay.active{
+    background: rgba(10,14,30,0.38);
+  }
+
+  /* Efecto visual de lluvia: gotas animadas cayendo sobre el mapa */
+  #rainOverlay{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index: 6;
+    display:none;
+    overflow:hidden;
+  }
+  #rainOverlay.active{ display:block; }
+  .raindrop{
+    position:absolute;
+    top: -20px;
+    width: 2px;
+    height: 16px;
+    background: linear-gradient(to bottom, rgba(170,210,240,0), rgba(170,210,240,0.7));
+    animation: raindropFall linear infinite;
+  }
+  @keyframes raindropFall{
+    to{ transform: translateY(120vh); }
+  }
+  #rainBanner{
+    position:absolute;
+    top: 108px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20,35,55,0.9);
+    border: 1px solid rgba(120,180,220,0.5);
+    color: #cfe6f7;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    z-index: 11;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  /* Panel del hexágono actual: dibujo + tipo de terreno, sin coordenadas */
+  #currentHexPanel{
+    position:absolute;
+    top: 62px;
+    left: 14px;
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    background: rgba(14,21,18,0.85);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 6px 16px 6px 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    z-index: 10;
+    pointer-events:none;
+  }
+  #currentHexLabel{
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 600;
+  }
+  #btnBuyPremiumZone{
+    pointer-events:auto;
+    background: #f2c14e;
+    color: #1a1408;
+    border: none;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor:pointer;
+    margin-left: 4px;
+    transition: all .15s ease;
+  }
+  #btnBuyPremiumZone:hover{
+    background: #ffd15c;
+  }
+  #btnCampTeleport{
+    pointer-events:auto;
+    background: #7c5cff;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor:pointer;
+    margin-left: 4px;
+    transition: all .15s ease;
+  }
+  #btnCampTeleport:hover{
+    background: #9678ff;
+  }
+  #btnOpenDepot{
+    pointer-events:auto;
+    background: #e0a458;
+    color: #1a1408;
+    border: none;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor:pointer;
+    margin-left: 4px;
+    transition: all .15s ease;
+  }
+  #btnOpenDepot:hover{
+    background: #f0bc74;
+  }
+
+  /* Panel de maquinaria y consumibles que ya comprastes, flotando a la izquierda */
+  #ownedItemsPanel{
+    position:absolute;
+    top: 108px;
+    left: 14px;
+    background: rgba(14,21,18,0.85);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    z-index: 10;
+    min-width: 150px;
+    max-width: 190px;
+  }
+  #ownedItemsTitle{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  #ownedItemsList{
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+  }
+  .ownedItemRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .ownedItemRow .ic{ font-size:16px; }
+  .ownedItemRow .ownedItemName{
+    display:flex;
+    align-items:center;
+    gap: 6px;
+  }
+  .ownedItemRow .ownedItemQty{
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+
+  /* Resumen de la Zona de Acopio, visible sin necesidad de estar parado ahí */
+  #depotSummaryPanel{
+    position:absolute;
+    left: 14px;
+    background: rgba(14,21,18,0.85);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    z-index: 10;
+    min-width: 150px;
+    max-width: 190px;
+  }
+  #depotSummaryTitle{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #e0a458;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  #depotSummaryList{
+    display:flex;
+    flex-direction:column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  #depotSummaryList .row{
+    display:flex;
+    justify-content:space-between;
+  }
+  #depotSummaryList .row b{ color: var(--text); }
+  #depotSummaryCap{
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--panel-border);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align:right;
+  }
+
+  /* Próximamente */
+  .soon{
+    font-size: 11px;
+    color: var(--text-dim);
+    opacity: .7;
+    text-align:center;
+    margin-top: 2px;
+  }
+
+  ::-webkit-scrollbar{ width:8px; }
+  ::-webkit-scrollbar-thumb{ background: var(--panel-border); border-radius: 4px; }
+
+  #hint{
+    position:absolute;
+    bottom: 14px;
+    left: 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: rgba(0,0,0,0.35);
+    padding: 6px 10px;
+    border-radius: 8px;
+    pointer-events:none;
+  }
+
+  /* Toast de aviso breve (ej: "la roca solo puede extraerse con dinamita") */
+  #toast{
+    position:absolute;
+    bottom: 54px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(30,16,16,0.92);
+    border: 1px solid #6b3a34;
+    color: #f2cfc9;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    max-width: 80%;
+    text-align:center;
+    z-index: 20;
+    pointer-events:none;
+    opacity: 0;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  #toast.show{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Modal de venta */
+  #sellModalOverlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,0.55);
+    z-index: 50;
+    align-items:center;
+    justify-content:center;
+  }
+  #sellModalOverlay.open{ display:flex; }
+  #sellModal{
+    width: 320px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 18px 18px 16px 18px;
+  }
+  #sellModal h3{
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    color: var(--text);
+  }
+  #sellList{
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .sellItem{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .sellItem .sellItemName{
+    color: var(--text);
+    display:flex;
+    flex-direction:column;
+  }
+  .sellItem .sellItemName small{
+    color: var(--text-dim);
+    font-weight:400;
+  }
+  .sellItem .sellItemSub{
+    font-size: 15px;
+    color: #f2c14e;
+    font-weight:600;
+  }
+  .sellItem.empty{
+    opacity: .4;
+  }
+  #sellTravelNote{
+    font-size: 11.5px;
+    color: #f2c14e;
+    background: rgba(242,193,78,0.1);
+    border: 1px solid rgba(242,193,78,0.3);
+    border-radius: 8px;
+    padding: 7px 10px;
+    margin-bottom: 10px;
+  }
+  #sellTotalRow{
+    font-size: 13px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--panel-border);
+    padding-top: 10px;
+    margin-bottom: 14px;
+  }
+  #sellTotalRow b{
+    color: #f2c14e;
+    font-size: 15px;
+  }
+  #sellModalButtons{
+    display:flex;
+    gap: 8px;
+  }
+  .modalBtn{
+    flex:1;
+    padding: 9px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor:pointer;
+    border: 1px solid var(--panel-border);
+    transition: all .15s ease;
+  }
+  .modalBtn.secondary{
+    background: transparent;
+    color: var(--text-dim);
+  }
+  .modalBtn.secondary:hover{
+    background: rgba(255,255,255,0.04);
+  }
+  .modalBtn.primary{
+    background: var(--accent-dim);
+    color: var(--text);
+    border-color: var(--accent-dim);
+  }
+  .modalBtn.primary:hover{
+    background: var(--accent);
+    color: #0e1512;
+  }
+  .modalBtn.primary:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+  }
+
+  /* Modal de compra de zona premium */
+  #premiumBuyOverlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,0.55);
+    z-index: 50;
+    align-items:center;
+    justify-content:center;
+  }
+  #premiumBuyOverlay.open{ display:flex; }
+  #premiumBuyModal{
+    width: 300px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  #premiumBuyModal h3{
+    margin: 0 0 10px 0;
+    font-size: 15px;
+    color: var(--text);
+  }
+  #premiumBuyDesc{
+    font-size: 13px;
+    color: var(--text-dim);
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+  }
+  #premiumBuyDesc b{ color: #f2c14e; }
+  #premiumBuyButtons{
+    display:flex;
+    gap: 8px;
+  }
+
+  /* Modal de la Zona de Acopio (depositar / retirar) */
+  #depotOverlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,0.55);
+    z-index: 50;
+    align-items:center;
+    justify-content:center;
+  }
+  #depotOverlay.open{ display:flex; }
+  #depotModal{
+    width: 340px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  #depotHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 6px;
+  }
+  #depotHeader h3{
+    margin:0;
+    font-size: 15px;
+    color: var(--text);
+  }
+  #depotCloseX{
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 16px;
+    cursor:pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+  }
+  #depotCloseX:hover{
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+  }
+  #depotCapacityRow{
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+  #depotCapacityRow b{ color: #e0a458; }
+  #depotList{
+    display:flex;
+    flex-direction:column;
+    gap: 12px;
+  }
+  .depotItem{
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .depotItemHeader{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .depotItemHeader .depotStoredQty{
+    color: #e0a458;
+    font-weight: 700;
+  }
+  .depotItemRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .depotBtnGroup{
+    display:flex;
+    gap: 6px;
+  }
+  .depotBtn{
+    padding: 5px 10px;
+    border-radius: 7px;
+    font-size: 11px;
+    cursor:pointer;
+    border: 1px solid var(--panel-border);
+    background: transparent;
+    color: var(--text);
+    transition: all .15s ease;
+  }
+  .depotBtn:hover:not(:disabled){
+    background: rgba(224,164,88,0.15);
+    border-color: #e0a458;
+  }
+  .depotBtn:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+  }
+
+  /* Pantalla de fin de juego (día 10) */
+  #gameOverOverlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,0.75);
+    z-index: 60;
+    align-items:center;
+    justify-content:center;
+  }
+  #gameOverOverlay.open{ display:flex; }
+  #gameOverModal{
+    width: 340px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 26px 24px;
+    text-align:center;
+  }
+  #gameOverModal h2{
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    color: var(--accent);
+  }
+  #gameOverModal p{
+    margin: 0 0 16px 0;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  #gameOverStats{
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text);
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  #gameOverStats .row{
+    display:flex;
+    justify-content:space-between;
+  }
+  #gameOverStats .row b{ color: #f2c14e; }
+
+  /* Modal de compra de maquinaria */
+  #buyModalOverlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,0.55);
+    z-index: 50;
+    align-items:center;
+    justify-content:center;
+  }
+  #buyModalOverlay.open{ display:flex; }
+  #buyModal{
+    width: 340px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 18px 18px 16px 18px;
+  }
+  #buyModal h3{
+    margin: 0;
+    font-size: 15px;
+    color: var(--text);
+  }
+  #buyModalHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 12px;
+  }
+  #buyCloseX{
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 16px;
+    line-height:1;
+    cursor:pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all .15s ease;
+  }
+  #buyCloseX:hover{
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+  }
+  #buyList{
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .buyItem{
+    display:flex;
+    gap: 10px;
+    align-items:flex-start;
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .buyItem.locked{
+    opacity: .45;
+  }
+  .buyItem .buyItemIcon{
+    font-size: 22px;
+    line-height:1;
+  }
+  .buyItem .buyItemBody{
+    flex:1;
+  }
+  .buyItem .buyItemName{
+    font-size: 13px;
+    font-weight:600;
+    color: var(--text);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 6px;
+  }
+  .buyItem .buyItemDesc{
+    font-size: 11.5px;
+    color: var(--text-dim);
+    margin-top: 3px;
+    line-height:1.4;
+  }
+  .buyItem .buyItemPrice{
+    font-size: 12px;
+    color: #f2c14e;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .buyItemBtn{
+    margin-top: 8px;
+    width:100%;
+    padding: 6px 8px;
+    border-radius: 7px;
+    font-size: 12px;
+    cursor:pointer;
+    border: 1px solid var(--accent-dim);
+    background: transparent;
+    color: var(--accent);
+    transition: all .15s ease;
+  }
+  .buyItemBtn:hover:not(:disabled){
+    background: var(--accent-dim);
+    color: var(--text);
+  }
+  .buyItemBtn:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+    border-color: var(--panel-border);
+    color: var(--text-dim);
+  }
+  .buyItemBtn.owned{
+    border-color: var(--accent);
+    color: var(--accent);
+    opacity: .7;
+    cursor:default;
+  }
+
+  /* Tarjeta de maquinaria adquirida (sidebar) */
+  #machinesOwnedList{
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+  }
+  .machineOwnedRow{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .machineOwnedRow .ic{ font-size:16px; }
+  /* Pantalla de bienvenida: nombre + color del cubito */
+  #welcomeOverlay{
+    position:fixed;
+    inset:0;
+    background: rgba(8,12,10,0.96);
+    z-index: 100;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  #welcomeModal{
+    width: 340px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 26px 24px;
+  }
+  #welcomeModal h2{
+    margin: 0 0 6px 0;
+    font-size: 19px;
+    color: var(--text);
+  }
+  .welcomeSubtitle{
+    margin: 0 0 18px 0;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .welcomeLabel{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  #welcomeNameInput{
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 18px;
+    box-sizing: border-box;
+  }
+  #welcomeNameInput:focus{
+    outline: none;
+    border-color: var(--accent);
+  }
+  #welcomeColorGrid{
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+  .welcomeColorSwatch{
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    cursor:pointer;
+    border: 2px solid transparent;
+    transition: all .15s ease;
+  }
+  .welcomeColorSwatch:hover{
+    transform: scale(1.08);
+  }
+  .welcomeColorSwatch.selected{
+    border-color: #fff;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  #btnStartGame{
+    width:100%;
+    padding: 11px;
+    border-radius: 9px;
+    border: none;
+    background: var(--accent);
+    color: #0e1512;
+    font-size: 14px;
+    font-weight: 700;
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  #btnStartGame:hover{
+    background: #6dd89a;
+  }
+
+  /* Identificador del jugador en la barra superior */
+  #playerBadge{
+    background: rgba(14,21,18,0.85);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 6px 14px 6px 8px;
+    display:flex;
+    align-items:center;
+    gap: 7px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  #playerBadgeName{
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    max-width: 100px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
 </style>
 </head>
 <body>
 
-<!-- ==================== PANTALLA DE LOGIN / SALA ==================== -->
-<div id="panelLogin">
-    <div class="caja">
-        <h1>🧟 Zombie Maze</h1>
-        <p style="opacity:0.8; font-size:13px;">Entra con tu nombre para unirte a la partida</p>
-        <input type="text" id="inputNombre" placeholder="Tu nombre" maxlength="14">
-        <button id="btnEntrar">Entrar a la partida</button>
-    </div>
+<div id="welcomeOverlay">
+  <div id="welcomeModal">
+    <h2>Antes de empezar</h2>
+    <p class="welcomeSubtitle">Elegí tu nombre y el color de tu cubito para distinguirte en el mapa.</p>
+
+    <label for="welcomeNameInput" class="welcomeLabel">Nombre</label>
+    <input type="text" id="welcomeNameInput" maxlength="16" placeholder="Tu nombre">
+
+    <div class="welcomeLabel">Color del cubito</div>
+    <div id="welcomeColorGrid"></div>
+
+    <button id="btnStartGame">Empezar a jugar</button>
+  </div>
 </div>
 
-<div id="hud" style="display:none;">
-    <span id="vida">Vida: 10 / 10</span>
-    <span id="arma">Arma: 6 balas (R para recargar)</span>
-    <span id="tiempo">Tiempo: 2:00</span>
-    <span id="kills">Zombies eliminados: 0</span>
-    <span id="reparaciones">Cajas reparadas: 0 / 4</span>
-</div>
-<div id="hud2" style="width:1100px; text-align:center; font-size:12px; opacity:0.8; padding-bottom:4px; display:none;">
-    WASD/Flechas: moverse (dispara hacia donde te mueves) | Clic derecho: disparar | Espacio: abrir/cerrar puerta | Quédate quieto sobre una caja naranja para repararla | R: recargar
+<div id="app">
+  <div id="mapWrap">
+    <div id="nightOverlay"></div>
+    <div id="rainOverlay"></div>
+    <div id="topBar">
+      <div id="playerBadge">
+        <svg id="playerBadgeSwatch" viewBox="0 0 40 40" width="22" height="22">
+          <polygon points="20,4 34,12 20,20 6,12" fill="#f7cf63" stroke="rgba(0,0,0,0.3)" stroke-width="1.5" id="playerBadgeShape"/>
+        </svg>
+        <span id="playerBadgeName">Jugador</span>
+      </div>
+      <div id="coinsTopDisplay">💰 <b id="coinsAmount">0</b></div>
+      <div id="dayTopDisplay">Día <b id="dayCount">1</b></div>
+      <div id="turnTopDisplay">☀️ Turno Día</div>
+      <div id="timerTopDisplay">⏱ <b id="timerDisplay">00:00</b></div>
+      <button id="btnSettings" aria-label="Opciones">⚙️</button>
+    </div>
+    <div id="dayProgressBar"></div>
+    <div id="currentHexPanel">
+      <svg id="currentHexSwatch" viewBox="0 0 40 40" width="30" height="30">
+        <polygon id="currentHexSwatchShape" points="" fill="#2f6b3f" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
+      </svg>
+      <span id="currentHexLabel">Vegetación</span>
+      <button id="btnBuyPremiumZone" style="display:none;">Comprar por $0</button>
+      <button id="btnCampTeleport" style="display:none;">🌀 Teletransportar</button>
+      <button id="btnOpenDepot" style="display:none;">📦 Gestionar Acopio</button>
+    </div>
+    <div id="ownedItemsPanel">
+      <div id="ownedItemsTitle">Mis cosas</div>
+      <div id="ownedItemsList">
+        <div class="soon" id="noOwnedItemsMsg">Todavía no compraste nada.</div>
+      </div>
+    </div>
+    <div id="depotSummaryPanel" style="display:none;">
+      <div id="depotSummaryTitle">📦 Zona de Acopio</div>
+      <div id="depotSummaryList"></div>
+      <div id="depotSummaryCap">0 / 30</div>
+    </div>
+    <canvas id="hexCanvas"></canvas>
+    <div id="hint">Click y arrastrá para mover la cámara · Rueda para zoom</div>
+    <div id="toast"></div>
+  </div>
+
+  <div id="sidebar">
+    <div class="card">
+      <h2>Turno</h2>
+      <div id="ticksRow"></div>
+      <div id="ticksLabel">Ticks disponibles: <b id="ticksLeft">5</b> / 5</div>
+    </div>
+
+    <div class="card">
+      <h2>Acciones (1 acción = 1 tick)</h2>
+      <div class="actionsGrid">
+        <div class="actionBtn" id="btnDesplazar" data-action="move">
+          <div class="ic">🧭</div>
+          <div>Desplazar</div>
+        </div>
+        <div class="actionBtn" id="btnExtraer" data-action="extract">
+          <div class="ic">⛏️</div>
+          <div>Extraer</div>
+        </div>
+        <div class="actionBtn" id="btnComprar" data-action="buy" title="Solo podés comprar estando en la ciudad">
+          <div class="ic">🛒</div>
+          <div>Comprar</div>
+        </div>
+        <div class="actionBtn" id="btnVender" data-action="sell" title="Solo podés vender cuando estás en la ciudad">
+          <div class="ic">💰</div>
+          <div>Vender</div>
+        </div>
+        <div class="actionBtn" id="btnDinamita" data-action="dynamite" style="grid-column: span 2;">
+          <div class="ic">🧨</div>
+          <div>Usar dinamita <span class="priceTag" id="dynamiteCountLabel">(0)</span></div>
+        </div>
+        <div class="actionBtn" id="btnScanner" data-action="scan" style="grid-column: span 2; display:none;">
+          <div class="ic">📡</div>
+          <div>Escanear alrededores</div>
+        </div>
+        <div class="actionBtn" id="btnPlaceCampA" data-action="placeA" style="grid-column: span 2; display:none;">
+          <div class="ic">⛺</div>
+          <div>Colocar Punto A acá</div>
+        </div>
+        <div class="actionBtn" id="btnPlaceCampB" data-action="placeB" style="grid-column: span 2; display:none;">
+          <div class="ic">⛺</div>
+          <div>Colocar Punto B acá</div>
+        </div>
+        <div class="actionBtn" id="btnPlaceDepot" data-action="placeDepot" style="grid-column: span 2; display:none;">
+          <div class="ic">📦</div>
+          <div>Colocar Zona de Acopio acá</div>
+        </div>
+        <div class="actionBtn" id="btnInstallOilExtractor" data-action="installOil" style="grid-column: span 2; display:none;">
+          <div class="ic">🛢️</div>
+          <div>Instalar Extractora acá</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Inventario</h2>
+      <div id="inventory">
+        <div class="row"><span>Roca <span class="priceTag invPriceTag">(💲12 c/u)</span></span><b id="invRock">0</b></div>
+        <div class="row"><span>Arcilla <span class="priceTag invPriceTag">(💲7 c/u)</span></span><b id="invClay">0</b></div>
+        <div class="row"><span>Arena <span class="priceTag invPriceTag">(💲4 c/u)</span></span><b id="invSand">0</b></div>
+        <div class="row"><span>Petróleo <span class="priceTag invPriceTag">(💲28 c/u)</span></span><b id="invOil">0</b></div>
+      </div>
+      <div id="inventoryCapRow">Total: <b id="invTotal">0</b> / <b id="invMax">25</b></div>
+    </div>
+  </div>
 </div>
 
-<div id="wrapper" style="display:none;">
-    <canvas id="canvas" width="1100" height="660"></canvas>
-    <div id="listaJugadores"></div>
-    <div id="overlay">
-        <h1 id="overlayTitle"></h1>
-        <p id="overlaySubtitle"></p>
+<div id="sellModalOverlay">
+  <div id="sellModal">
+    <h3>Vender materiales</h3>
+    <div id="sellList"></div>
+    <div id="sellTravelNote" style="display:none;"></div>
+    <div id="sellTotalRow">Total a recibir: <b id="sellTotal">💰 0</b></div>
+    <div id="sellModalButtons">
+      <button id="sellCancelBtn" class="modalBtn secondary">Cancelar</button>
+      <button id="sellConfirmBtn" class="modalBtn primary">Vender todo</button>
     </div>
-    <div id="mensajePuerta">Presiona ESPACIO para abrir/cerrar la puerta</div>
-    <div id="panelReparacion">
-        <div>Reparando caja... quédate quieto encima</div>
-        <div class="barraFondo"><div class="barraProgreso" id="barraReparacion"></div></div>
-        <div class="avisoPeligro" id="avisoPeligro">⚠ ¡Zombie cerca! Si te alejas, el progreso se reinicia</div>
-    </div>
+  </div>
 </div>
 
-<!-- ==================== FIREBASE ==================== -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<div id="buyModalOverlay">
+  <div id="buyModal">
+    <div id="buyModalHeader">
+      <h3>Comprar maquinaria</h3>
+      <button id="buyCloseX" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="buyList"></div>
+    <div id="buyModalButtons">
+      <button id="buyCancelBtn" class="modalBtn secondary">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="premiumBuyOverlay">
+  <div id="premiumBuyModal">
+    <h3 id="premiumBuyTitle">Comprar zona</h3>
+    <p id="premiumBuyDesc"></p>
+    <div id="premiumBuyButtons">
+      <button id="premiumBuyCancelBtn" class="modalBtn secondary">Cancelar</button>
+      <button id="premiumBuyConfirmBtn" class="modalBtn primary">Comprar</button>
+    </div>
+  </div>
+</div>
+
+<div id="depotOverlay">
+  <div id="depotModal">
+    <div id="depotHeader">
+      <h3>Zona de Acopio</h3>
+      <button id="depotCloseX" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="depotCapacityRow">Guardado: <b id="depotTotalLabel">0</b> / <b id="depotMaxLabel">30</b></div>
+    <div id="depotList"></div>
+  </div>
+</div>
+
+<div id="gameOverOverlay">
+  <div id="gameOverModal">
+    <h2>Partida terminada</h2>
+    <p>Llegaste al final del Día 15.</p>
+    <div id="gameOverStats"></div>
+  </div>
+</div>
+
+<div id="settingsOverlay">
+  <div id="settingsModal">
+    <div id="settingsHeader">
+      <h3>Opciones</h3>
+      <button id="settingsCloseX" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="settingsRow">
+      <label for="volumeSlider">🔊 Volumen</label>
+      <input type="range" id="volumeSlider" min="0" max="100" value="60">
+      <span id="volumeValue">60%</span>
+    </div>
+  </div>
+</div>
+
 <script>
-// ====================================================================
-// CONFIGURACION DE FIREBASE
-// Reemplaza estos valores con los de TU proyecto de Firebase
-// (el mismo que usaste para "juego-de-rocas", o uno nuevo).
-// Los encuentras en: Firebase Console > Configuración del proyecto > General
-// > Tus apps > Configuración del SDK
-// ====================================================================
-const firebaseConfig = {
-    apiKey: "AIzaSyAP8Slqy2rHs21VG4UAKjUtxm_U447U8vs",
-    databaseURL: "https://juego-de-rocas-default-rtdb.firebaseio.com",
-    projectId: "juego-de-rocas",
-    appId: "1:229026823251:web:763bbd486b0ece44c11aa6"
+/* =========================================================
+   JUEGO HEXAGONAL - PROTOTIPO
+   Hexágonos flat-top. Mapa con forma HEXAGONAL GLOBAL
+   (coordenadas axiales/cúbicas, radio = MAP_RADIUS).
+   Terrenos: vegetación, roca, arena, arcilla, agua.
+   Acciones: Desplazar / Extraer (Comprar/Vender pendientes).
+   5 ticks por turno, repuestos al terminar turno.
+   Sonido corto al gastar cada tick.
+   ========================================================= */
+
+// ---------- CONFIGURACIÓN GENERAL ----------
+const MAP_RADIUS = 7; // radio del mapa en hexágonos -> forma hexagonal global
+const HEX_SIZE = 32;  // radio del hexágono (centro a vértice)
+const MAX_TICKS_DAY = 5;    // ticks disponibles durante el turno Día
+const MAX_TICKS_NIGHT = 3;  // ticks disponibles durante el turno Noche (sin Torre de Luz)
+const NIGHT_LIGHT_TOWER_BONUS = 2; // ticks extra que da la Torre de Luz de noche (3 -> 5)
+const TOTAL_GAME_DAYS = 15;  // la partida dura 15 días; al llegar al día 15 termina
+const RAIN_DAY = 5;          // día en el que llueve (una sola vez en toda la partida)
+const DRY_DAY = 7;           // día en el que se secan la arena y arcilla mojadas
+const INVENTORY_LIMIT = 10;  // máximo total de materiales (roca+arena+arcilla) que se puede cargar
+const STORAGE_DEPOT_CAPACITY = 30; // máximo total que puede guardar la Zona de Acopio
+const OIL_DEPOSIT_COUNT = 7;  // cuántos hexágonos de roca esconden petróleo debajo
+const OIL_MIN_AMOUNT = 8;
+const OIL_MAX_AMOUNT = 15;
+const OIL_SELL_PRICE = 28;    // el recurso más valioso del juego
+
+// Terrenos posibles
+const TERRAIN = {
+  GRASS: 'grass',   // vegetación (mayoría)
+  ROCK: 'rock',     // zona de roca (extraíble)
+  SAND: 'sand',     // arena (extraíble)
+  CLAY: 'clay',     // arcilla (extraíble)
+  WATER: 'water',   // agua (no transitable, no extraíble por ahora)
+  CITY: 'city',     // ciudad central: único lugar donde se puede vender
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-</script>
+const TERRAIN_LABEL = {
+  [TERRAIN.GRASS]: 'Vegetación',
+  [TERRAIN.ROCK]: 'Roca',
+  [TERRAIN.SAND]: 'Arena',
+  [TERRAIN.CLAY]: 'Arcilla',
+  [TERRAIN.WATER]: 'Agua',
+  [TERRAIN.CITY]: 'Ciudad',
+};
 
-<script>
-// ==================== CONFIGURACION DEL JUEGO ====================
-const MAZE_COLS = 20;
-const MAZE_ROWS = 12;
-const CELL_SIZE = 55;
+// Terrenos que se pueden extraer y a qué clave de inventario mapean
+const EXTRACTABLE = {
+  [TERRAIN.ROCK]: 'rock',
+  [TERRAIN.SAND]: 'sand',
+  [TERRAIN.CLAY]: 'clay',
+};
 
-const canvas = document.getElementById('canvas');
+// Precios de venta por unidad. La roca es la más cara de los materiales de
+// superficie, la arcilla es intermedia y la arena la más barata. El petróleo
+// es el recurso más valioso de todo el juego.
+const SELL_PRICE = {
+  rock: 12,
+  clay: 7,
+  sand: 4,
+  oil: OIL_SELL_PRICE,
+};
+
+const MATERIAL_LABEL = {
+  rock: 'Roca',
+  clay: 'Arcilla',
+  sand: 'Arena',
+  oil: 'Petróleo',
+};
+
+// Maquinaria comprable. Por ahora solo la retroexcavadora está activa;
+// las otras 4 quedan definidas para más adelante (compra deshabilitada).
+const MACHINES = {
+  excavator: {
+    name: 'Retroexcavadora',
+    icon: '🚜',
+    price: 100,
+    desc: 'Extrae el doble de rápido en cualquier material (2 unidades por tick en vez de 1).',
+    available: true,
+  },
+  dumpTruck: {
+    name: 'Volqueta',
+    icon: '🚛',
+    price: 70,
+    desc: 'Te permite vender el material guardado en tu Zona de Acopio sin ir a la ciudad (necesita una Zona de Acopio colocada; cada venta gasta 2 ticks: ida y vuelta). No vende lo que tenés en el inventario.',
+    available: true,
+  },
+  scanner: {
+    name: 'Escáner de Superficie',
+    icon: '📡',
+    price: 90,
+    desc: 'Al usarlo, revela el terreno y la cantidad de material disponible en un radio de 5 casillas alrededor tuyo (no funciona sobre zonas premium sin comprar).',
+    available: true,
+  },
+  machine4: {
+    name: 'Camión Góndola',
+    icon: '🚚',
+    price: 130,
+    desc: 'Te permite cargar toda tu maquinaria en un solo viaje: te desplazás 2 casillas por tick en vez de 1.',
+    available: true,
+  },
+  machine5: {
+    name: 'Torre de Luz',
+    icon: '💡',
+    price: 50,
+    desc: 'Ilumina tu zona de trabajo durante la noche: te da 2 ticks adicionales (de 3 a 5) a partir de la siguiente noche.',
+    available: true,
+  },
+  campBase: {
+    name: 'Campamento Base',
+    icon: '⛺',
+    price: 110,
+    desc: 'Colocá un Punto A y un Punto B en el mapa (no gasta ticks). Una vez colocados los dos, entrar a uno te teletransporta al otro al instante.',
+    available: true,
+  },
+  storageDepot: {
+    name: 'Zona de Acopio',
+    icon: '📦',
+    price: 90,
+    desc: 'Comprá un lote y colocalo en un hexágono (no en la ciudad). Ahí podés guardar y retirar material cuando quieras, hasta 30 unidades, sin ocupar tu inventario.',
+    available: true,
+  },
+  oilExtractor: {
+    name: 'Extractora de Petróleo',
+    icon: '🛢️',
+    price: 180,
+    desc: 'Instalala en una casilla donde el Escáner haya detectado petróleo (no gasta ticks colocarla). Una vez instalada, ahí podés "Extraer" petróleo normalmente. Es el material más valioso del juego.',
+    available: true,
+  },
+};
+
+// Ítems consumibles: se compran de a unidades y se gastan al usarlos (a diferencia
+// de la maquinaria, que se compra una sola vez).
+const CONSUMABLES = {
+  dynamite: {
+    name: 'Dinamita',
+    icon: '🧨',
+    price: 12,
+    desc: 'Vuela una casilla de roca para poder extraerla. Se gasta 1 unidad por uso.',
+    available: true,
+  },
+};
+
+// ---------- ESTADO DEL JUEGO ----------
+const state = {
+  grid: new Map(),      // key "q,r" -> { q, r, terrain, resourceAmount }
+  playerQ: 0,
+  playerR: 0,
+  ticksLeft: MAX_TICKS_DAY,
+  day: 1,
+  isDayTime: true,       // true = turno Día, false = turno Noche
+  gameOver: false,        // true cuando se llega al día 10 y termina la partida
+  // Si la Torre de Luz estaba comprada al EMPEZAR el turno Noche actual.
+  // Comprarla a mitad de una noche no da el bonus hasta la noche siguiente.
+  lightTowerActiveThisNight: false,
+  hasRainedYet: false,    // para que la lluvia del día 5 ocurra una sola vez
+  isRainingNow: false,    // true mientras dura el efecto visual de lluvia
+  inventory: { rock: 0, sand: 0, clay: 0, oil: 0 },
+  consumables: { dynamite: 0 },
+  coins: 0,
+  machines: { excavator: false, dumpTruck: false, scanner: false, machine4: false, machine5: false, campBase: false, storageDepot: false, oilExtractor: false },
+  campBase: { owned: false, pointA: null, pointB: null }, // {q,r} una vez colocados
+  storageDepot: {
+    owned: false,       // se compró el lote en la tienda
+    placed: false,      // ya se colocó en un hexágono del mapa
+    q: null, r: null,   // posición una vez colocada
+    stored: { rock: 0, sand: 0, clay: 0, oil: 0 }, // material guardado ahí (máx. 30 en total)
+  },
+  settings: { volume: 0.6 }, // 0 a 1, controla el volumen maestro de todo el audio
+  playerName: 'Jugador',
+  playerColor: '#f7cf63',
+  mode: null,             // null | 'move' | 'extract' | 'placeCampA' | 'placeCampB'
+  highlightHexes: [],     // hexes resaltados para desplazamiento (solo borde)
+  camera: { x: 0, y: 0, zoom: 1 },
+  dragging: false,
+};
+
+// Total de materiales cargados ahora mismo (para el límite de inventario)
+function totalInventoryCount() {
+  return state.inventory.rock + state.inventory.sand + state.inventory.clay + state.inventory.oil;
+}
+
+// Máximo de ticks del turno actual, según sea Día o Noche y si la Torre de Luz
+// ya estaba comprada AL EMPEZAR la noche en curso (no si se compró recién ahora).
+function getMaxTicksForCurrentTurn() {
+  if (state.isDayTime) return MAX_TICKS_DAY;
+  return state.lightTowerActiveThisNight ? MAX_TICKS_NIGHT + NIGHT_LIGHT_TOWER_BONUS : MAX_TICKS_NIGHT;
+}
+
+function cellKey(q, r) { return q + ',' + r; }
+function getCell(q, r) { return state.grid.get(cellKey(q, r)); }
+
+// ---------- GENERACIÓN DEL MAPA (forma hexagonal global) ----------
+// Usamos coordenadas axiales (q,r) con restricción cúbica |q|,|r|,|s|<=RADIUS
+// para que el CONTORNO del mapa sea un hexágono grande, no un rectángulo.
+function generateMap() {
+  const grid = new Map();
+  const cellsList = [];
+
+  for (let q = -MAP_RADIUS; q <= MAP_RADIUS; q++) {
+    const r1 = Math.max(-MAP_RADIUS, -q - MAP_RADIUS);
+    const r2 = Math.min(MAP_RADIUS, -q + MAP_RADIUS);
+    for (let r = r1; r <= r2; r++) {
+      const cell = { q, r, terrain: TERRAIN.GRASS, resourceAmount: 0, blasted: false };
+      grid.set(cellKey(q, r), cell);
+      cellsList.push(cell);
+    }
+  }
+
+  // --- Sembrar lagos de agua (clusters) ---
+  seedClusters(grid, cellsList, TERRAIN.WATER, 3, 3, 6, () => 0);
+
+  // --- Sembrar zonas de roca (más clusters y más grandes para que estén menos separados) ---
+  // Cada hex de recurso tiene entre 4 y 12 unidades disponibles, al azar.
+  seedClusters(grid, cellsList, TERRAIN.ROCK, 14, 3, 6, randomResourceAmount);
+
+  // --- Sembrar zonas de arena ---
+  seedClusters(grid, cellsList, TERRAIN.SAND, 13, 3, 6, randomResourceAmount);
+
+  // --- Sembrar zonas de arcilla ---
+  seedClusters(grid, cellsList, TERRAIN.CLAY, 13, 3, 5, randomResourceAmount);
+
+  // --- Ciudad central: único lugar del mapa donde se puede vender material ---
+  // Se coloca al final para garantizar que quede siempre en el centro (0,0),
+  // sin que ningún cluster de recursos la pise.
+  const cityCell = grid.get(cellKey(0, 0));
+  if (cityCell) {
+    cityCell.terrain = TERRAIN.CITY;
+    cityCell.resourceAmount = 0;
+    cityCell.blasted = false;
+    cityCell.depleted = false;
+  }
+
+  // --- Zonas premium ("préstamo"): 3 de roca, 3 de arena, 3 de arcilla ---
+  // Hexágonos individuales sueltos (no clusters) que hay que comprar antes de
+  // poder extraer ahí. Cantidad y precio aleatorios dentro de un rango fijo.
+  seedPremiumZones(grid, cellsList, TERRAIN.ROCK, 3);
+  seedPremiumZones(grid, cellsList, TERRAIN.SAND, 3);
+  seedPremiumZones(grid, cellsList, TERRAIN.CLAY, 3);
+
+  // --- Petróleo escondido: solo puede haber debajo de hexágonos de roca
+  // (nunca arena, arcilla, vegetación, agua o ciudad). Invisible hasta que
+  // esa roca esté completamente vaciada Y escaneada con el Escáner.
+  seedOilDeposits(grid, cellsList, OIL_DEPOSIT_COUNT);
+
+  state.grid = grid;
+}
+
+// Elige `count` hexágonos de ROCA al azar (sin importar si son zona premium
+// o no) para esconder petróleo debajo. No cambia el terreno visible; el
+// petróleo queda oculto hasta que la roca se vacíe del todo y se escanee.
+function seedOilDeposits(grid, cellsList, count) {
+  const candidates = cellsList.filter(c => c.terrain === TERRAIN.ROCK);
+  for (let i = 0; i < count; i++) {
+    if (candidates.length === 0) return;
+    const idx = Math.floor(Math.random() * candidates.length);
+    const cell = candidates.splice(idx, 1)[0];
+    cell.hasOil = true;
+    cell.oilAmount = OIL_MIN_AMOUNT + Math.floor(Math.random() * (OIL_MAX_AMOUNT - OIL_MIN_AMOUNT + 1));
+    cell.oilExtracted = false; // se pone en true cuando ya se instaló la extractora ahí
+  }
+}
+
+// Convierte `count` hexágonos de vegetación sueltos en zonas premium del
+// terreno indicado: cantidad de recurso 10-30, precio de compra 50-150.
+// Rango de precio de compra de cada zona premium, según el material.
+// Arena es la más barata, arcilla intermedia, roca la más cara (misma lógica
+// de precios que ya se usa en toda la tienda).
+const PREMIUM_PRICE_RANGE = {
+  [TERRAIN.SAND]: { min: 50, max: 80 },
+  [TERRAIN.CLAY]: { min: 80, max: 100 },
+  [TERRAIN.ROCK]: { min: 100, max: 150 },
+};
+
+function seedPremiumZones(grid, cellsList, terrainType, count) {
+  const range = PREMIUM_PRICE_RANGE[terrainType];
+  const MIN_DIST_FROM_CITY = 5;   // lejos de la ciudad (que está en 0,0)
+  const MIN_DIST_BETWEEN_ZONES = 3; // separadas entre sí, nunca adyacentes
+
+  for (let i = 0; i < count; i++) {
+    // Candidatas: vegetación, lejos de la ciudad, y lejos de otras zonas premium ya puestas.
+    const existingPremium = cellsList.filter(c => c.isPremium);
+    const candidates = cellsList.filter(c => {
+      if (c.terrain !== TERRAIN.GRASS) return false;
+      if (hexDistance(c.q, c.r, 0, 0) < MIN_DIST_FROM_CITY) return false;
+      return existingPremium.every(p => hexDistance(c.q, c.r, p.q, p.r) >= MIN_DIST_BETWEEN_ZONES);
+    });
+
+    // Si el filtro estricto no deja candidatas (mapa chico o ya muy ocupado),
+    // relajamos solo la distancia mínima entre zonas para no fallar en silencio.
+    const pool = candidates.length > 0
+      ? candidates
+      : cellsList.filter(c => c.terrain === TERRAIN.GRASS && hexDistance(c.q, c.r, 0, 0) >= MIN_DIST_FROM_CITY);
+    if (pool.length === 0) return;
+
+    // Preferimos las celdas más lejanas del centro (las "esquinas" del hexágono
+    // del mapa), no solo las que cumplen el mínimo de distancia.
+    pool.sort((a, b) => hexDistance(b.q, b.r, 0, 0) - hexDistance(a.q, a.r, 0, 0));
+    const topCandidates = pool.slice(0, Math.max(1, Math.floor(pool.length * 0.35)));
+    const cell = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+
+    cell.terrain = terrainType;
+    cell.resourceAmount = 10 + Math.floor(Math.random() * 21); // 10 a 30
+    cell.isPremium = true;
+    cell.premiumPurchased = false;
+    cell.premiumPrice = range.min + Math.floor(Math.random() * (range.max - range.min + 1));
+    // Si el terreno lo requiere (roca), igual necesita dinamita además de comprarla.
+    if (terrainType === TERRAIN.ROCK) cell.blasted = false;
+  }
+}
+
+// Cantidad de recurso por hex: mínimo 4, máximo 12, al azar por casilla.
+function randomResourceAmount() {
+  const MIN_RESOURCE = 4;
+  const MAX_RESOURCE = 12;
+  return MIN_RESOURCE + Math.floor(Math.random() * (MAX_RESOURCE - MIN_RESOURCE + 1));
+}
+
+// Siembra `count` clusters de terreno `terrainType` sobre celdas que sigan siendo vegetación.
+function seedClusters(grid, cellsList, terrainType, count, minSize, maxSize, resourceFn) {
+  for (let c = 0; c < count; c++) {
+    // Elegir semilla al azar entre las celdas que todavía son vegetación
+    const candidates = cellsList.filter(cell => cell.terrain === TERRAIN.GRASS);
+    if (candidates.length === 0) return;
+    const seed = candidates[Math.floor(Math.random() * candidates.length)];
+
+    const clusterSize = minSize + Math.floor(Math.random() * (maxSize - minSize + 1));
+    let frontier = [seed];
+    let placed = 0;
+    const seen = new Set();
+
+    while (frontier.length > 0 && placed < clusterSize) {
+      const idx = Math.floor(Math.random() * frontier.length);
+      const cell = frontier.splice(idx, 1)[0];
+      const key = cellKey(cell.q, cell.r);
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      if (cell.terrain !== TERRAIN.GRASS) continue; // no pisar otro terreno especial
+
+      cell.terrain = terrainType;
+      cell.resourceAmount = resourceFn();
+      placed++;
+
+      getNeighbors(cell.q, cell.r).forEach(n => {
+        const nc = getCell(n.q, n.r) || grid.get(cellKey(n.q, n.r));
+        if (nc && nc.terrain === TERRAIN.GRASS) frontier.push(nc);
+      });
+    }
+  }
+}
+
+// ---------- COORDENADAS HEXAGONALES AXIALES (flat-top) ----------
+function hexToPixel(q, r) {
+  const x = HEX_SIZE * 1.5 * q;
+  const y = HEX_SIZE * Math.sqrt(3) * (r + q / 2);
+  return { x, y };
+}
+
+// Vecinos en coordenadas axiales (flat-top)
+const AXIAL_DIRS = [
+  { dq: +1, dr: 0 }, { dq: +1, dr: -1 }, { dq: 0, dr: -1 },
+  { dq: -1, dr: 0 }, { dq: -1, dr: +1 }, { dq: 0, dr: +1 },
+];
+
+function getNeighbors(q, r) {
+  return AXIAL_DIRS
+    .map(d => ({ q: q + d.dq, r: r + d.dr }))
+    .filter(n => getCell(n.q, n.r) !== undefined || state.grid.has(cellKey(n.q, n.r)));
+}
+
+// Distancia hexagonal real entre dos celdas (coordenadas axiales -> cúbicas).
+function hexDistance(q1, r1, q2, r2) {
+  const s1 = -q1 - r1;
+  const s2 = -q2 - r2;
+  return Math.max(Math.abs(q1 - q2), Math.abs(r1 - r2), Math.abs(s1 - s2));
+}
+
+// Todas las celdas transitables dentro de un radio (1 o 2) desde el jugador.
+// Con el Camión Góndola, el radio de desplazamiento pasa de 1 a 2 casillas.
+function getReachableHexes(q, r, range) {
+  const result = [];
+  for (let dq = -range; dq <= range; dq++) {
+    for (let dr = -range; dr <= range; dr++) {
+      if (dq === 0 && dr === 0) continue;
+      const nq = q + dq, nr = r + dr;
+      if (hexDistance(q, r, nq, nr) > range) continue;
+      const c = getCell(nq, nr);
+      if (c && c.terrain !== TERRAIN.WATER) {
+        result.push({ q: nq, r: nr });
+      }
+    }
+  }
+  return result;
+}
+
+// Todas las celdas dentro de un radio (sin filtrar por terreno), usada por el
+// Escáner de Superficie para revelar todo lo que hay alrededor del jugador.
+function getAllHexesInRadius(q, r, range) {
+  const result = [];
+  for (let dq = -range; dq <= range; dq++) {
+    for (let dr = -range; dr <= range; dr++) {
+      const nq = q + dq, nr = r + dr;
+      if (hexDistance(q, r, nq, nr) > range) continue;
+      const c = getCell(nq, nr);
+      if (c) result.push(c);
+    }
+  }
+  return result;
+}
+
+// ---------- CANVAS SETUP ----------
+const canvas = document.getElementById('hexCanvas');
 const ctx = canvas.getContext('2d');
 
-const PLAYER_SIZE = 22;
-const PLAYER_SPEED = 3.2;
-const ZOMBIE_SIZE = 24;
-const BULLET_SPEED = 10;
-const BULLET_RADIUS = 4;
+function resizeCanvas() {
+  const wrap = document.getElementById('mapWrap');
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  draw();
+}
+window.addEventListener('resize', resizeCanvas);
 
-const VIDA_MAXIMA = 10;
-const DAÑO_POR_GOLPE = 2;
-const COOLDOWN_GOLPE_MS = 1000; // 1 segundo de invulnerabilidad tras ser atacado
-const MUNICION_MAXIMA = 6;
-const MUNICION_POR_CAJA = 5;
-const ZOMBIE_TIEMPO_ABRIR_PUERTA = 3000;
-const ZOMBIE_VIDA_MAXIMA = 2;
+function centerCameraOnPlayer() {
+  const p = hexToPixel(state.playerQ, state.playerR);
+  state.camera.x = canvas.width / 2 - p.x * state.camera.zoom;
+  state.camera.y = canvas.height / 2 - p.y * state.camera.zoom;
+}
 
-const TIEMPO_LIMITE_MS = 2 * 60 * 1000;
-const INTERVALO_SPAWN_MS = 10000;
-const REPARACION_DURACION_MS = 10000;
-const REPARACION_DIST_ZOMBIE_PELIGRO = 90;
+// ---------- DIBUJO ----------
+function hexCorner(cx, cy, size, i) {
+  const angle_rad = Math.PI / 180 * (60 * i);
+  return { x: cx + size * Math.cos(angle_rad), y: cy + size * Math.sin(angle_rad) };
+}
 
-// Colores distintos para cada jugador que se conecta (se asignan en orden)
-const COLORES_JUGADORES = [
-    '#1565c0', // azul
-    '#e53935', // rojo
-    '#43a047', // verde (distinto del zombie)
-    '#fb8c00', // naranja
-    '#8e24aa', // violeta
-    '#00acc1'  // turquesa
-];
+function drawHexPath(cx, cy, size) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const p = hexCorner(cx, cy, size, i);
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  }
+  ctx.closePath();
+}
 
-// ==================== IDENTIDAD DE ESTA SESION ====================
-const MI_ID = 'jugador_' + Math.random().toString(36).substr(2, 9);
-let miNombre = '';
-let miColor = COLORES_JUGADORES[0];
-const CODIGO_SALA_FIJO = 'principal'; // sala unica compartida: quien entra al link, entra aca
-let esHost = false; // el primer jugador en la sala simula zombies/spawns para evitar desincronizacion
+function fillColorForTerrain(cell) {
+  // Si el recurso fue extraído por completo, se marca en verde oscuro
+  // para identificar visualmente que ya fue agotado.
+  if (cell.depleted) return '#1c3320';
 
-// ==================== LABERINTO: 10 HABITACIONES EN 2 FILAS DE 5 ====================
-// (Igual para todos: se genera de forma determinista, no aleatoria, para
-// que cada cliente calcule exactamente el mismo laberinto sin necesidad
-// de sincronizarlo por red.)
-let puertasLocal = []; // referencia local usada por las funciones de colision
+  // Arena/arcilla mojadas por la lluvia: colores oscurecidos hasta que se sequen.
+  if (cell.wet) {
+    if (cell.terrain === TERRAIN.SAND) return '#7a6a40';
+    if (cell.terrain === TERRAIN.CLAY) return '#5c3220';
+  }
 
-function crearLaberinto() {
-    const cols = MAZE_COLS, rows = MAZE_ROWS;
-    const celdas = [];
-    for (let x = 0; x < cols; x++) {
-        celdas.push([]);
-        for (let y = 0; y < rows; y++) {
-            celdas[x].push({ n: true, s: true, e: true, w: true });
-        }
+  switch (cell.terrain) {
+    // La roca sin volar se ve gris oscuro sólido; una vez volada con dinamita
+    // se aclara y muestra fragmentos, dando a entender que ya se puede extraer.
+    case TERRAIN.ROCK:  return cell.blasted ? '#8a8f97' : '#54585e';
+    case TERRAIN.SAND:  return '#d8c184';
+    case TERRAIN.CLAY:  return '#b5623a';
+    case TERRAIN.WATER: return '#2c6f8f';
+    case TERRAIN.CITY:  return '#e0433c'; // rojo intenso, muy visible sobre el resto del mapa
+    case TERRAIN.GRASS:
+    default:
+      return ((cell.q + cell.r) % 2 === 0) ? '#2f6b3f' : '#356e44';
+  }
+}
+
+// Dibuja pequeñas grietas y fragmentos sueltos sobre una roca ya volada,
+// para diferenciarla visualmente de una roca intacta (sin volar).
+// Generador pseudoaleatorio simple y determinístico (mismo seed = mismo resultado siempre).
+function seededRandom(seed) {
+  let s = seed;
+  return function () {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+function drawBlastedRockDetail(cx, cy, seed) {
+  const rand = seededRandom(seed || 1);
+  ctx.save();
+
+  // --- Sombreado de base más oscuro en el centro para dar profundidad al cráter ---
+  const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, HEX_SIZE * 0.9);
+  grad.addColorStop(0, 'rgba(30,31,34,0.35)');
+  grad.addColorStop(1, 'rgba(30,31,34,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, HEX_SIZE * 0.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  // --- Red densa de grietas tipo "vidrio roto", irradiando de 3 puntos de impacto ---
+  ctx.strokeStyle = 'rgba(28,29,32,0.75)';
+  ctx.lineWidth = 1.1;
+
+  const impactPoints = [
+    { x: cx - 3, y: cy - 2 },
+    { x: cx + 7, y: cy + 5 },
+    { x: cx - 8, y: cy + 6 },
+  ];
+
+  impactPoints.forEach((p, idx) => {
+    const rayCount = 5 + (idx === 0 ? 2 : 0); // el punto de impacto principal tiene más rayos
+    for (let i = 0; i < rayCount; i++) {
+      const baseAngle = (Math.PI * 2 * i) / rayCount + rand() * 0.5;
+      const len1 = 5 + rand() * 6;
+      const midX = p.x + Math.cos(baseAngle) * len1;
+      const midY = p.y + Math.sin(baseAngle) * len1;
+
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(midX, midY);
+      ctx.stroke();
+
+      // Ramificación secundaria en zigzag, como una grieta real que se bifurca
+      const branchAngle = baseAngle + (rand() - 0.5) * 1.1;
+      const len2 = 3 + rand() * 5;
+      const endX = midX + Math.cos(branchAngle) * len2;
+      const endY = midY + Math.sin(branchAngle) * len2;
+      ctx.beginPath();
+      ctx.moveTo(midX, midY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    }
+  });
+
+  // --- Muchos fragmentos sueltos de distintos tamaños repartidos por todo el hexágono ---
+  const fragmentSeeds = [
+    { fx: cx - 10, fy: cy + 7, s: 2.6, rot: 0.3 },
+    { fx: cx + 9, fy: cy + 6, s: 3.2, rot: -0.5 },
+    { fx: cx + 3, fy: cy - 10, s: 2.4, rot: 0.8 },
+    { fx: cx - 6, fy: cy - 9, s: 2.0, rot: -0.2 },
+    { fx: cx + 11, fy: cy - 3, s: 2.2, rot: 1.1 },
+    { fx: cx - 12, fy: cy - 2, s: 1.8, rot: 0.6 },
+    { fx: cx + 1, fy: cy + 10, s: 2.0, rot: -0.9 },
+    { fx: cx - 2, fy: cy + 2, s: 1.6, rot: 0.4 },
+    { fx: cx + 6, fy: cy - 1, s: 1.7, rot: -0.3 },
+  ];
+
+  fragmentSeeds.forEach(f => {
+    ctx.save();
+    ctx.translate(f.fx, f.fy);
+    ctx.rotate(f.rot);
+    ctx.fillStyle = 'rgba(28,29,32,0.6)';
+    ctx.strokeStyle = 'rgba(15,15,17,0.4)';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(-f.s, -f.s * 0.5);
+    ctx.lineTo(f.s * 0.4, -f.s);
+    ctx.lineTo(f.s, f.s * 0.3);
+    ctx.lineTo(0.1, f.s);
+    ctx.lineTo(-f.s * 0.7, f.s * 0.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  ctx.restore();
+}
+
+// Dibuja pequeños edificios estilizados para marcar la ciudad central,
+// el único lugar del mapa donde se puede vender material.
+// Marca la ciudad con una letra "C" bien visible, sin dibujo detallado.
+function drawCityDetail(cx, cy) {
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.lineWidth = 2.5;
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeText('C', cx, cy);
+  ctx.fillText('C', cx, cy);
+  ctx.restore();
+}
+
+// Símbolo de gota sobre arena/arcilla mojada por la lluvia
+function drawWetDetail(cx, cy) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(90, 167, 216, 0.9)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 8);
+  ctx.quadraticCurveTo(cx + 6, cy + 2, cx, cy + 8);
+  ctx.quadraticCurveTo(cx - 6, cy + 2, cx, cy - 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Símbolo de dinero sobre zonas premium ("préstamo") todavía no compradas
+function drawPremiumDetail(cx, cy) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, HEX_SIZE * 0.34, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#f2c14e';
+  ctx.font = 'bold 15px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('$', cx, cy);
+  ctx.restore();
+}
+
+// Muestra la cantidad de recurso revelada por el Escáner, como una etiqueta
+// pequeña en la esquina inferior del hexágono (para no tapar otros íconos).
+function drawScannedAmount(cx, cy, amount) {
+  ctx.save();
+  const labelY = cy + HEX_SIZE * 0.55;
+  ctx.fillStyle = 'rgba(20,30,45,0.85)';
+  ctx.beginPath();
+  ctx.roundRect(cx - 12, labelY - 8, 24, 16, 4);
+  ctx.fill();
+  ctx.fillStyle = '#8fd6ff';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(amount, cx, labelY);
+  ctx.restore();
+}
+
+// Dibuja el marcador de Punto A o Punto B del Campamento Base: una banderita
+// con la letra correspondiente, bien visible sobre el hexágono.
+function drawCampPointDetail(cx, cy, letter) {
+  ctx.save();
+  const poleTopY = cy - HEX_SIZE * 0.85;
+  const poleBottomY = cy + HEX_SIZE * 0.15;
+
+  // Mástil
+  ctx.strokeStyle = '#e7efe9';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, poleBottomY);
+  ctx.lineTo(cx, poleTopY);
+  ctx.stroke();
+
+  // Bandera triangular
+  ctx.fillStyle = letter === 'A' ? '#57c785' : '#f2c14e';
+  ctx.beginPath();
+  ctx.moveTo(cx, poleTopY);
+  ctx.lineTo(cx + 14, poleTopY + 6);
+  ctx.lineTo(cx, poleTopY + 12);
+  ctx.closePath();
+  ctx.fill();
+
+  // Letra sobre la bandera
+  ctx.fillStyle = '#0e1512';
+  ctx.font = 'bold 9px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(letter, cx + 6, poleTopY + 6);
+
+  ctx.restore();
+}
+
+// Dibuja el ícono de caja de la Zona de Acopio sobre su hexágono
+function drawStorageDepotDetail(cx, cy) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, HEX_SIZE * 0.36, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#e0a458';
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.lineWidth = 1;
+  const s = HEX_SIZE * 0.28;
+  ctx.fillRect(cx - s, cy - s * 0.7, s * 2, s * 1.4);
+  ctx.strokeRect(cx - s, cy - s * 0.7, s * 2, s * 1.4);
+
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.moveTo(cx - s, cy - s * 0.1);
+  ctx.lineTo(cx + s, cy - s * 0.1);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// Marca la presencia de petróleo: una gota negra brillante. Si ya hay
+// extractora instalada (installed=true), se dibuja más grande y sólida.
+function drawOilDetail(cx, cy, installed = false, amount = null) {
+  ctx.save();
+  const size = installed ? HEX_SIZE * 0.3 : HEX_SIZE * 0.2;
+  const offsetY = installed ? 0 : -HEX_SIZE * 0.42;
+
+  ctx.fillStyle = installed ? '#0d0d0f' : 'rgba(10,10,12,0.9)';
+  ctx.strokeStyle = installed ? '#3a3a40' : 'rgba(180,150,60,0.8)';
+  ctx.lineWidth = installed ? 1.5 : 1;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + offsetY - size);
+  ctx.quadraticCurveTo(cx + size * 0.8, cy + offsetY + size * 0.2, cx, cy + offsetY + size);
+  ctx.quadraticCurveTo(cx - size * 0.8, cy + offsetY + size * 0.2, cx, cy + offsetY - size);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Brillito de reflejo
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath();
+  ctx.arc(cx - size * 0.25, cy + offsetY - size * 0.15, size * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Cantidad detectada por el escáner (o restante, si ya se instaló la extractora)
+  if (amount !== null) {
+    drawScannedAmount(cx, cy, amount);
+  }
+
+  ctx.restore();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(state.camera.x, state.camera.y);
+  ctx.scale(state.camera.zoom, state.camera.zoom);
+
+  const highlightSet = new Set(state.highlightHexes.map(h => cellKey(h.q, h.r)));
+
+  for (const cell of state.grid.values()) {
+    const { x, y } = hexToPixel(cell.q, cell.r);
+
+    const screenX = x * state.camera.zoom + state.camera.x;
+    const screenY = y * state.camera.zoom + state.camera.y;
+    if (screenX < -60 || screenX > canvas.width + 60 || screenY < -60 || screenY > canvas.height + 60) {
+      continue;
     }
 
-    function abrir(x1, y1, x2, y2) {
-        if (x2 === x1 && y2 === y1 - 1) { celdas[x1][y1].n = false; celdas[x2][y2].s = false; }
-        else if (x2 === x1 && y2 === y1 + 1) { celdas[x1][y1].s = false; celdas[x2][y2].n = false; }
-        else if (x2 === x1 + 1 && y2 === y1) { celdas[x1][y1].e = false; celdas[x2][y2].w = false; }
-        else if (x2 === x1 - 1 && y2 === y1) { celdas[x1][y1].w = false; celdas[x2][y2].e = false; }
+    drawHexPath(x, y, HEX_SIZE - 1);
+    ctx.fillStyle = fillColorForTerrain(cell);
+    ctx.fill();
+
+    // Las zonas premium sin comprar llevan un borde dorado extra para distinguirlas
+    if (cell.isPremium && !cell.premiumPurchased) {
+      ctx.strokeStyle = 'rgba(242,193,78,0.9)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
 
-    const habitaciones = [
-        { x1: 0,  y1: 0, x2: 3,  y2: 3 },
-        { x1: 4,  y1: 0, x2: 7,  y2: 3 },
-        { x1: 8,  y1: 0, x2: 11, y2: 3 },
-        { x1: 12, y1: 0, x2: 15, y2: 3 },
-        { x1: 16, y1: 0, x2: 19, y2: 3 },
-        { x1: 0,  y1: 8, x2: 3,  y2: 11 },
-        { x1: 4,  y1: 8, x2: 7,  y2: 11 },
-        { x1: 8,  y1: 8, x2: 11, y2: 11 },
-        { x1: 12, y1: 8, x2: 15, y2: 11 },
-        { x1: 16, y1: 8, x2: 19, y2: 11 }
-    ];
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
-    for (const h of habitaciones) {
-        for (let x = h.x1; x <= h.x2; x++) {
-            for (let y = h.y1; y <= h.y2; y++) {
-                if (x < h.x2) abrir(x, y, x + 1, y);
-                if (y < h.y2) abrir(x, y, x, y + 1);
-            }
-        }
+    if (cell.terrain === TERRAIN.WATER) {
+      // Pequeño detalle de onda, sin ícono ni círculo de fondo
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x - 8, y);
+      ctx.quadraticCurveTo(x - 4, y - 4, x, y);
+      ctx.quadraticCurveTo(x + 4, y + 4, x + 8, y);
+      ctx.stroke();
     }
 
-    for (let y = 4; y <= 7; y++) {
-        for (let x = 0; x < cols - 1; x++) {
-            abrir(x, y, x + 1, y);
-        }
-        if (y < 7) {
-            for (let x = 0; x < cols; x++) abrir(x, y, x, y + 1);
-        }
+    // Roca ya volada con dinamita: se dibujan grietas/fragmentos para
+    // dar a entender visualmente que ya se puede extraer.
+    if (cell.terrain === TERRAIN.ROCK && cell.blasted && !cell.depleted) {
+      drawBlastedRockDetail(x, y, cell.crackSeed);
     }
 
-    const puertasIniciales = [
-        { id: 'p0', x: 1,  y: 3, dir: 's', abierta: false },
-        { id: 'p1', x: 5,  y: 3, dir: 's', abierta: false },
-        { id: 'p2', x: 9,  y: 3, dir: 's', abierta: false },
-        { id: 'p3', x: 13, y: 3, dir: 's', abierta: false },
-        { id: 'p4', x: 17, y: 3, dir: 's', abierta: false },
-        { id: 'p5', x: 1,  y: 8, dir: 'n', abierta: false },
-        { id: 'p6', x: 5,  y: 8, dir: 'n', abierta: false },
-        { id: 'p7', x: 9,  y: 8, dir: 'n', abierta: false },
-        { id: 'p8', x: 13, y: 8, dir: 'n', abierta: false },
-        { id: 'p9', x: 17, y: 8, dir: 'n', abierta: false }
-    ];
-
-    for (const p of puertasIniciales) {
-        abrirParaPuerta(celdas, p.x, p.y, p.dir);
+    // Ciudad central: pequeños edificios dibujados para identificarla de un vistazo
+    if (cell.terrain === TERRAIN.CITY) {
+      drawCityDetail(x, y);
     }
 
-    puertasLocal = puertasIniciales;
-    return celdas;
-}
-
-function abrirParaPuerta(celdas, x, y, dir) {
-    if (dir === 'n' && y > 0) { celdas[x][y].n = false; celdas[x][y - 1].s = false; }
-    if (dir === 's' && y < MAZE_ROWS - 1) { celdas[x][y].s = false; celdas[x][y + 1].n = false; }
-    if (dir === 'e' && x < MAZE_COLS - 1) { celdas[x][y].e = false; celdas[x + 1][y].w = false; }
-    if (dir === 'w' && x > 0) { celdas[x][y].w = false; celdas[x - 1][y].e = false; }
-}
-
-function puedeMover(maze, x, y, nx, ny) {
-    if (nx < 0 || ny < 0 || nx >= MAZE_COLS || ny >= MAZE_ROWS) return false;
-
-    const puerta = puertaEntre(x, y, nx, ny);
-    if (puerta && !puerta.abierta) return false;
-
-    if (nx === x && ny === y - 1) return !maze[x][y].n;
-    if (nx === x && ny === y + 1) return !maze[x][y].s;
-    if (nx === x + 1 && ny === y) return !maze[x][y].e;
-    if (nx === x - 1 && ny === y) return !maze[x][y].w;
-    return false;
-}
-
-function puertaEntre(x, y, nx, ny) {
-    for (const p of puertasLocal) {
-        if (p.dir === 'n' && p.x === x && p.y === y && nx === x && ny === y - 1) return p;
-        if (p.dir === 's' && p.x === x && p.y === y && nx === x && ny === y + 1) return p;
-        if (p.dir === 'e' && p.x === x && p.y === y && nx === x + 1 && ny === y) return p;
-        if (p.dir === 'w' && p.x === x && p.y === y && nx === x - 1 && ny === y) return p;
-        if (p.dir === 'n' && p.x === nx && p.y - 1 === ny && x === nx && y === ny + 1) return p;
-        if (p.dir === 's' && p.x === nx && p.y + 1 === ny && x === nx && y === ny - 1) return p;
-        if (p.dir === 'e' && p.x + 1 === nx && p.y === ny && x === nx - 1 && y === ny) return p;
-        if (p.dir === 'w' && p.x - 1 === nx && p.y === ny && x === nx + 1 && y === ny) return p;
-    }
-    return null;
-}
-
-// ==================== PATHFINDING (BFS) - solo lo corre el host ====================
-function buscarCamino(maze, inicio, meta) {
-    const clave = (p) => p[0] + ',' + p[1];
-    const visitados = new Set([clave(inicio)]);
-    const vieneDe = {};
-    const cola = [inicio];
-    let encontrado = false;
-
-    while (cola.length > 0) {
-        const actual = cola.shift();
-        if (actual[0] === meta[0] && actual[1] === meta[1]) { encontrado = true; break; }
-
-        const direcciones = [[0, -1], [0, 1], [1, 0], [-1, 0]];
-        for (const [dx, dy] of direcciones) {
-            const sig = [actual[0] + dx, actual[1] + dy];
-            const k = clave(sig);
-            if (!visitados.has(k) && puedeMover(maze, actual[0], actual[1], sig[0], sig[1])) {
-                visitados.add(k);
-                vieneDe[k] = actual;
-                cola.push(sig);
-            }
-        }
+    // Arena/arcilla mojadas: símbolo de gota indicando que están bloqueadas
+    if (cell.wet && (cell.terrain === TERRAIN.SAND || cell.terrain === TERRAIN.CLAY)) {
+      drawWetDetail(x, y);
     }
 
-    const camino = [];
-    if (!encontrado) return camino;
-
-    let nodo = meta;
-    while (!(nodo[0] === inicio[0] && nodo[1] === inicio[1])) {
-        camino.push(nodo);
-        nodo = vieneDe[clave(nodo)];
+    // Zonas premium sin comprar: símbolo de dinero indicando que hay que pagarlas
+    if (cell.isPremium && !cell.premiumPurchased) {
+      drawPremiumDetail(x, y);
     }
-    camino.reverse();
-    return camino;
-}
 
-// ==================== POSICIONES FIJAS: cajas, esquinas ====================
-const ESQUINAS_SPAWN = [
-    [1, 1],
-    [MAZE_COLS - 2, 1],
-    [1, MAZE_ROWS - 2],
-    [MAZE_COLS - 2, MAZE_ROWS - 2]
-];
-
-const ESQUINAS_REPARACION = [
-    [1, 1],
-    [MAZE_COLS - 2, 1],
-    [1, MAZE_ROWS - 2],
-    [MAZE_COLS - 2, MAZE_ROWS - 2]
-];
-
-const POSICIONES_MUNICION = [
-    { x: 2, y: 1 },
-    { x: 17, y: 1 },
-    { x: 17, y: 9 },
-    { x: 2, y: 9 },
-    { x: 9, y: 5 }
-];
-
-function celdaCentroPixel(cx, cy, size) {
-    return {
-        x: cx * CELL_SIZE + (CELL_SIZE - size) / 2,
-        y: cy * CELL_SIZE + (CELL_SIZE - size) / 2
-    };
-}
-
-function pixelACelda(pos, size) {
-    const cx = pos.x + size / 2;
-    const cy = pos.y + size / 2;
-    return [
-        Math.min(Math.max(Math.floor(cx / CELL_SIZE), 0), MAZE_COLS - 1),
-        Math.min(Math.max(Math.floor(cy / CELL_SIZE), 0), MAZE_ROWS - 1)
-    ];
-}
-
-// ==================== ESTADO LOCAL DEL JUEGO ====================
-let maze;
-let miJugador = { x: 0, y: 0, dir: { x: 0, y: -1 }, vida: VIDA_MAXIMA, municion: MUNICION_MAXIMA, kills: 0, ultimoGolpe: 0, nombre: '', color: '' };
-let otrosJugadores = {}; // id -> datos del jugador (sincronizado desde Firebase)
-let zombies = [];        // simulados por el host, sincronizados a todos
-let bullets = [];        // balas de TODOS los jugadores, cada cliente simula las propias y lee las ajenas
-let cajasMunicion = [];
-let cajasReparacion = [];
-let tiempoInicio = 0;
-let gameOver = false;
-let victory = false;
-let cajaReparandoActual = null;
-const keysDown = new Set();
-
-let refSala, refJugadores, refZombies, refPuertas, refCajasMun, refCajasRep, refEstado, refBullets;
-
-// ==================== LOGIN: leer sala de la URL o crear una nueva ====================
-function inicializarLogin() {
-    // No hace falta nada especial: todos entran a la misma sala fija.
-    document.getElementById('inputNombre').focus();
-}
-
-document.getElementById('btnEntrar').addEventListener('click', entrarAPartida);
-document.getElementById('inputNombre').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') entrarAPartida();
-});
-
-function entrarAPartida() {
-    const nombre = document.getElementById('inputNombre').value.trim();
-    if (!nombre) {
-        document.getElementById('inputNombre').focus();
-        return;
+    // Celdas reveladas por el Escáner de Superficie: muestra la cantidad
+    // de recurso disponible sin necesidad de estar parado ahí.
+    if (cell.scanned && EXTRACTABLE[cell.terrain] && !cell.depleted && !(cell.isPremium && !cell.premiumPurchased)) {
+      drawScannedAmount(x, y, cell.resourceAmount);
     }
-    miNombre = nombre.substring(0, 14);
 
-    document.getElementById('panelLogin').style.display = 'none';
-    document.getElementById('hud').style.display = 'flex';
-    document.getElementById('hud2').style.display = 'block';
-    document.getElementById('wrapper').style.display = 'block';
-
-    conectarAFirebase();
-}
-
-// ==================== CONEXION A FIREBASE ====================
-function conectarAFirebase() {
-    refSala = db.ref('salas/' + CODIGO_SALA_FIJO);
-    refJugadores = refSala.child('jugadores');
-    refZombies = refSala.child('zombies');
-    refPuertas = refSala.child('puertas');
-    refCajasMun = refSala.child('cajasMunicion');
-    refCajasRep = refSala.child('cajasReparacion');
-    refEstado = refSala.child('estado');
-    refBullets = refSala.child('bullets');
-
-    // Decide quien es el host: el primero en escribir su timestamp de union gana.
-    // Usamos una transaccion sobre estado/hostId para evitar carreras entre
-    // 2 jugadores que entran casi al mismo tiempo. Si la partida anterior
-    // ya termino (juegoTerminado), cualquiera puede tomar el puesto de host
-    // de nuevo para arrancar una partida fresca.
-    refEstado.transaction((actual) => {
-        if (actual === null) {
-            return { hostId: MI_ID, juegoTerminado: false }; // sala nueva, me postulo
-        }
-        if (actual.juegoTerminado) {
-            return { ...actual, hostId: MI_ID }; // partida anterior termino, tomo el puesto
-        }
-        return actual; // partida en curso con host activo, no lo piso
-    }, (error, comprometido, snapshot) => {
-        const datos = snapshot.val() || {};
-        esHost = datos.hostId === MI_ID;
-
-        if (esHost) {
-            inicializarEstadoDeSalaComoHost();
-        }
-
-        // Sea host o no, cada cliente arma su copia local del laberinto
-        // (deterministico, no depende de la red) y arranca su jugador.
-        maze = crearLaberinto();
-
-        // Elegir color: contamos cuantos jugadores ya hay para asignar el
-        // siguiente color disponible de la lista.
-        refJugadores.once('value', (snap) => {
-            const cantidadActual = snap.numChildren();
-            miColor = COLORES_JUGADORES[cantidadActual % COLORES_JUGADORES.length];
-
-            // Posicion inicial: cada jugador arranca en el pasillo central,
-            // con un pequeño offset para no aparecer todos apilados.
-            const offset = cantidadActual * 30;
-            miJugador.x = 9 * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE) / 2 + offset;
-            miJugador.y = 5 * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE) / 2;
-            miJugador.nombre = miNombre;
-            miJugador.color = miColor;
-
-            publicarMiEstado();
-            escucharJugadores();
-            escucharZombies();
-            escucharPuertas();
-            escucharCajas();
-            escucharBullets();
-            escucharEstado();
-
-            // Si el jugador se desconecta (cierra pestaña), lo removemos de la sala
-            refJugadores.child(MI_ID).onDisconnect().remove();
-            if (esHost) {
-                // Si el host se va, liberamos el puesto (pero sin borrar el
-                // resto del estado) para que otro jugador conectado lo retome.
-                refEstado.child('hostId').onDisconnect().set(null);
-            }
-
-            cajasMunicion = POSICIONES_MUNICION.map((p, i) => ({ ...p, id: 'm' + i, recogida: false }));
-            cajasReparacion = ESQUINAS_REPARACION.map((p, i) => ({ x: p[0], y: p[1], id: 'r' + i, reparada: false }));
-
-            vigilarHostAusente();
-            iniciarGameLoop();
-        });
-    });
-}
-
-// Vigila continuamente si el host desaparece (se desconecto) mientras la
-// partida sigue en curso, y toma el puesto automaticamente para que los
-// zombies no se queden congelados sin nadie simulandolos.
-function vigilarHostAusente() {
-    refEstado.child('hostId').on('value', (snap) => {
-        const hostActual = snap.val();
-        if (hostActual === MI_ID) {
-            esHost = true;
-            return;
-        }
-        if (hostActual !== null) {
-            esHost = false;
-            return;
-        }
-        // hostId quedo en null: el host se fue. Nos postulamos con una
-        // transaccion para evitar que 2 jugadores se autodeclaren host a la vez.
-        if (gameOver || victory) return;
-
-        refEstado.child('hostId').transaction((actual) => {
-            if (actual === null) return MI_ID;
-            return actual;
-        }, (error, comprometido, snapshot2) => {
-            esHost = snapshot2.val() === MI_ID;
-            if (esHost) {
-                refEstado.child('hostId').onDisconnect().set(null);
-            }
-        });
-    });
-}
-
-function inicializarEstadoDeSalaComoHost() {
-    refEstado.once('value', (snap) => {
-        const estadoActual = snap.val();
-
-        // Si la sala nunca se inicializo, O si la partida anterior ya
-        // termino (juegoTerminado) y este es el primer jugador entrando
-        // de nuevo, reiniciamos todo desde cero para una partida nueva.
-        const necesitaReset = !estadoActual || !estadoActual.tiempoInicio || estadoActual.juegoTerminado;
-        if (!necesitaReset) return; // la sala ya esta en curso, no tocar nada
-
-        refEstado.set({
-            hostId: MI_ID,
-            tiempoInicio: firebase.database.ServerValue.TIMESTAMP,
-            ultimoSpawn: firebase.database.ServerValue.TIMESTAMP,
-            juegoTerminado: false,
-            resultado: null,
-            mensajeResultado: null
-        });
-
-        // El host crea el estado inicial de zombies, puertas y cajas para toda la sala
-        const zombiesIniciales = {};
-        [ESQUINAS_SPAWN[0], ESQUINAS_SPAWN[3]].forEach((esquina, i) => {
-            const pos = celdaCentroPixel(esquina[0], esquina[1], ZOMBIE_SIZE);
-            zombiesIniciales['z' + i] = {
-                x: pos.x, y: pos.y,
-                dirX: 0, dirY: 1,
-                speed: (1.6 + Math.random() * 0.5) * 1.25,
-                vida: ZOMBIE_VIDA_MAXIMA,
-                esperandoPuerta: null
-            };
-        });
-        refZombies.set(zombiesIniciales);
-
-        const puertasIniciales = {};
-        puertasLocal.forEach(p => {
-            puertasIniciales[p.id] = { x: p.x, y: p.y, dir: p.dir, abierta: false };
-        });
-        refPuertas.set(puertasIniciales);
-
-        const cajasMunIniciales = {};
-        POSICIONES_MUNICION.forEach((p, i) => {
-            cajasMunIniciales['m' + i] = { x: p.x, y: p.y, recogida: false };
-        });
-        refCajasMun.set(cajasMunIniciales);
-
-        const cajasRepIniciales = {};
-        ESQUINAS_REPARACION.forEach((p, i) => {
-            cajasRepIniciales['r' + i] = { x: p[0], y: p[1], reparada: false, reparandoPor: null, progresoDesde: null };
-        });
-        refCajasRep.set(cajasRepIniciales);
-
-        refBullets.remove(); // limpia balas viejas de la partida anterior
-    });
-}
-
-// ==================== PUBLICAR MI PROPIO ESTADO ====================
-function publicarMiEstado() {
-    refJugadores.child(MI_ID).set({
-        nombre: miJugador.nombre,
-        color: miJugador.color,
-        x: miJugador.x,
-        y: miJugador.y,
-        dirX: miJugador.dir.x,
-        dirY: miJugador.dir.y,
-        vida: miJugador.vida,
-        municion: miJugador.municion,
-        kills: miJugador.kills,
-        ultimoGolpe: miJugador.ultimoGolpe
-    });
-}
-
-// Publicamos posicion/estado unas ~15 veces por segundo (no en cada frame,
-// para no saturar Firebase con escrituras)
-setInterval(() => {
-    if (!refJugadores) return;
-    refJugadores.child(MI_ID).update({
-        x: miJugador.x,
-        y: miJugador.y,
-        dirX: miJugador.dir.x,
-        dirY: miJugador.dir.y,
-        vida: miJugador.vida,
-        municion: miJugador.municion,
-        kills: miJugador.kills,
-        ultimoGolpe: miJugador.ultimoGolpe
-    });
-}, 66);
-
-// ==================== ESCUCHAR CAMBIOS DE OTROS JUGADORES ====================
-function escucharJugadores() {
-    refJugadores.on('value', (snap) => {
-        const datos = snap.val() || {};
-        otrosJugadores = {};
-        for (const id in datos) {
-            if (id === MI_ID) continue;
-            otrosJugadores[id] = datos[id];
-        }
-        actualizarListaJugadores(datos);
-    });
-}
-
-function actualizarListaJugadores(datos) {
-    const cont = document.getElementById('listaJugadores');
-    let html = '<b>Jugadores:</b>';
-    for (const id in datos) {
-        const j = datos[id];
-        const esYo = id === MI_ID ? ' (tú)' : '';
-        html += `<div style="color:${j.color}">● ${j.nombre}${esYo} - ${Math.max(j.vida, 0)}❤</div>`;
+    // Puntos A y B del Campamento Base
+    if (state.campBase.pointA && cell.q === state.campBase.pointA.q && cell.r === state.campBase.pointA.r) {
+      drawCampPointDetail(x, y, 'A');
     }
-    cont.innerHTML = html;
-}
-
-// ==================== ESCUCHAR ZOMBIES (el host los simula, todos los leen) ====================
-function escucharZombies() {
-    refZombies.on('value', (snap) => {
-        const datos = snap.val() || {};
-        zombies = Object.keys(datos).map(id => ({
-            id,
-            pos: { x: datos[id].x, y: datos[id].y },
-            dir: { x: datos[id].dirX, y: datos[id].dirY },
-            speed: datos[id].speed,
-            vida: datos[id].vida,
-            esperandoPuertaDesde: datos[id].esperandoPuerta,
-            path: [] // el path solo lo necesita el host, se recalcula localmente si esHost
-        }));
-    });
-}
-
-// ==================== ESCUCHAR PUERTAS (cualquiera las abre/cierra) ====================
-function escucharPuertas() {
-    refPuertas.on('value', (snap) => {
-        const datos = snap.val() || {};
-        puertasLocal = Object.keys(datos).map(id => ({ id, ...datos[id] }));
-    });
-}
-
-// ==================== ESCUCHAR CAJAS ====================
-function escucharCajas() {
-    refCajasMun.on('value', (snap) => {
-        const datos = snap.val() || {};
-        cajasMunicion = Object.keys(datos).map(id => ({ id, ...datos[id] }));
-    });
-    refCajasRep.on('value', (snap) => {
-        const datos = snap.val() || {};
-        cajasReparacion = Object.keys(datos).map(id => ({ id, ...datos[id] }));
-    });
-}
-
-// ==================== ESCUCHAR BALAS DE OTROS JUGADORES ====================
-let balasAjenasVistas = new Set();
-function escucharBullets() {
-    refBullets.on('child_added', (snap) => {
-        const b = snap.val();
-        if (b.autor === MI_ID) return; // las mias ya las tengo localmente
-        if (balasAjenasVistas.has(snap.key)) return;
-        balasAjenasVistas.add(snap.key);
-        bullets.push({ x: b.x, y: b.y, dx: b.dx, dy: b.dy, autor: b.autor, remoto: true, key: snap.key });
-    });
-    refBullets.on('child_removed', (snap) => {
-        bullets = bullets.filter(b => b.key !== snap.key);
-        balasAjenasVistas.delete(snap.key);
-    });
-}
-
-// ==================== ESCUCHAR ESTADO GENERAL (tiempo, victoria) ====================
-function escucharEstado() {
-    refEstado.on('value', (snap) => {
-        const datos = snap.val() || {};
-        if (datos.tiempoInicio) tiempoInicio = datos.tiempoInicio;
-        if (datos.juegoTerminado && !gameOver && !victory) {
-            if (datos.resultado === 'victoria') {
-                victory = true;
-                mostrarOverlay('GANASTE', datos.mensajeResultado || 'Partida ganada', '#66ff66');
-            } else {
-                gameOver = true;
-                mostrarOverlay('GAME OVER', datos.mensajeResultado || 'La partida terminó', '#ff4444');
-            }
-        }
-    });
-}
-
-// ==================== HUD ====================
-function actualizarHud() {
-    document.getElementById('vida').textContent = `Vida: ${Math.max(miJugador.vida, 0)} / ${VIDA_MAXIMA}`;
-    document.getElementById('arma').textContent = `Arma: ${miJugador.municion} balas (R para recargar)`;
-    document.getElementById('kills').textContent = `Zombies eliminados: ${miJugador.kills}`;
-    const reparadas = cajasReparacion.filter(c => c.reparada).length;
-    document.getElementById('reparaciones').textContent = `Cajas reparadas: ${reparadas} / 4`;
-}
-
-function actualizarTiempoHud() {
-    if (!tiempoInicio) return;
-    const restante = Math.max(TIEMPO_LIMITE_MS - (Date.now() - tiempoInicio), 0);
-    const totalSeg = Math.ceil(restante / 1000);
-    const min = Math.floor(totalSeg / 60);
-    const seg = totalSeg % 60;
-    document.getElementById('tiempo').textContent = `Tiempo: ${min}:${seg.toString().padStart(2, '0')}`;
-
-    // Solo el host declara la victoria por tiempo, para que no se dispare 3 veces
-    if (esHost && restante <= 0 && !gameOver && !victory) {
-        declararResultado('victoria', `Sobrevivieron 2 minutos.`);
+    if (state.campBase.pointB && cell.q === state.campBase.pointB.q && cell.r === state.campBase.pointB.r) {
+      drawCampPointDetail(x, y, 'B');
     }
+
+    // Zona de Acopio colocada
+    if (state.storageDepot.placed && cell.q === state.storageDepot.q && cell.r === state.storageDepot.r) {
+      drawStorageDepotDetail(x, y);
+    }
+
+    // Petróleo detectado por el Escáner (solo se ve si la roca ya fue
+    // vaciada del todo Y escaneada)
+    if (cell.scanned && cell.hasOil && cell.depleted && !cell.oilExtracted) {
+      drawOilDetail(x, y, false, cell.oilAmount);
+    }
+    // Extractora de petróleo instalada: se ve siempre, ya escaneado o no
+    if (cell.oilExtracted) {
+      drawOilDetail(x, y, true, cell.oilAmount);
+    }
+
+    // Solo el margen/perímetro verde al poder desplazarse ahí (sin relleno hatch)
+    if (highlightSet.has(cellKey(cell.q, cell.r))) {
+      ctx.save();
+      drawHexPath(x, y, HEX_SIZE - 1);
+      ctx.strokeStyle = '#57c785';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (cell.q === state.playerQ && cell.r === state.playerR) {
+      drawPlayerCube(x, y);
+    }
+  }
+
+  ctx.restore();
 }
 
-// ==================== COLISIONES CON PAREDES Y PUERTAS ====================
-function colisionaConPared(pos, size) {
-    const xs = [pos.x, pos.x + size];
-    const ys = [pos.y, pos.y + size];
-    const grosorPared = 8;
+// Cubito COMPLETO (isométrico, con las 3 caras visibles) parado sobre el hex
+function drawPlayerCube(cx, cy) {
+  const s = HEX_SIZE * 0.48;
+  ctx.save();
+  // Elevamos el cubo entero para que se apoye sobre el centro del hex
+  ctx.translate(cx, cy - s * 0.95);
 
-    for (const x of xs) {
-        for (const y of ys) {
-            if (x < 0 || y < 0 || x >= MAZE_COLS * CELL_SIZE || y >= MAZE_ROWS * CELL_SIZE) return true;
+  // Sombra proyectada en el suelo
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, s * 1.05, s * 0.85, s * 0.3, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-            const cx = Math.floor(x / CELL_SIZE);
-            const cy = Math.floor(y / CELL_SIZE);
-            const celda = maze[cx][cy];
+  const top = -s * 0.95;
+  const mid = 0;
+  const bot = s * 0.95;
 
-            const localX = x - cx * CELL_SIZE;
-            const localY = y - cy * CELL_SIZE;
+  // Colores del cubo según el color elegido por el jugador (3 tonos: claro
+  // para la cara superior, medio para la derecha, oscuro para la izquierda).
+  const baseColor = state.playerColor || '#f7cf63';
+  const topColor = shadeHexColor(baseColor, 0.12);
+  const rightColor = baseColor;
+  const leftColor = shadeHexColor(baseColor, -0.28);
 
-            if (celda.n && localY < grosorPared) return true;
-            if (celda.s && localY > CELL_SIZE - grosorPared) return true;
-            if (celda.w && localX < grosorPared) return true;
-            if (celda.e && localX > CELL_SIZE - grosorPared) return true;
-        }
-    }
-    return false;
+  // Cara superior (rombo)
+  ctx.fillStyle = topColor;
+  ctx.beginPath();
+  ctx.moveTo(0, top);
+  ctx.lineTo(s * 0.9, top + s * 0.5);
+  ctx.lineTo(0, top + s);
+  ctx.lineTo(-s * 0.9, top + s * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Cara derecha (más oscura)
+  ctx.fillStyle = rightColor;
+  ctx.beginPath();
+  ctx.moveTo(0, top + s);
+  ctx.lineTo(s * 0.9, top + s * 0.5);
+  ctx.lineTo(s * 0.9, bot - s * 0.45);
+  ctx.lineTo(0, bot);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Cara izquierda (la más oscura)
+  ctx.fillStyle = leftColor;
+  ctx.beginPath();
+  ctx.moveTo(0, top + s);
+  ctx.lineTo(-s * 0.9, top + s * 0.5);
+  ctx.lineTo(-s * 0.9, bot - s * 0.45);
+  ctx.lineTo(0, bot);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
 }
 
-function colisionaConPuertaCerrada(pos, size) {
-    const cxCentro = pos.x + size / 2;
-    const cyCentro = pos.y + size / 2;
+// Aclara (percent > 0) u oscurece (percent < 0) un color hex, para generar
+// las 3 tonalidades del cubo a partir de un único color elegido.
+function shadeHexColor(hex, percent) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  let r = (num >> 16) & 0xff;
+  let g = (num >> 8) & 0xff;
+  let b = num & 0xff;
 
-    for (const p of puertasLocal) {
-        if (p.abierta) continue;
+  const adjust = (channel) => {
+    if (percent >= 0) return Math.min(255, Math.round(channel + (255 - channel) * percent));
+    return Math.max(0, Math.round(channel * (1 + percent)));
+  };
 
-        let doorX, doorY, horizontal;
-        if (p.dir === 'n') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = p.y * CELL_SIZE; horizontal = true; }
-        else if (p.dir === 's') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = (p.y + 1) * CELL_SIZE; horizontal = true; }
-        else if (p.dir === 'e') { doorX = (p.x + 1) * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; horizontal = false; }
-        else { doorX = p.x * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; horizontal = false; }
-
-        const mitad = CELL_SIZE / 2;
-        if (horizontal) {
-            if (Math.abs(cyCentro - doorY) < size / 2 + 4 && Math.abs(cxCentro - doorX) < mitad) return true;
-        } else {
-            if (Math.abs(cxCentro - doorX) < size / 2 + 4 && Math.abs(cyCentro - doorY) < mitad) return true;
-        }
-    }
-    return false;
+  r = adjust(r); g = adjust(g); b = adjust(b);
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
-function intentarMover(pos, dx, dy, size) {
-    const nuevoX = { x: pos.x + dx, y: pos.y };
-    if (!colisionaConPared(nuevoX, size) && !colisionaConPuertaCerrada(nuevoX, size)) pos.x = nuevoX.x;
-
-    const nuevoY = { x: pos.x, y: pos.y + dy };
-    if (!colisionaConPared(nuevoY, size) && !colisionaConPuertaCerrada(nuevoY, size)) pos.y = nuevoY.y;
-}
-
-function puertaCercana() {
-    const centro = { x: miJugador.x + PLAYER_SIZE / 2, y: miJugador.y + PLAYER_SIZE / 2 };
-    const DIST_APERTURA = CELL_SIZE * 0.8;
-
-    let mejor = null, mejorDist = Infinity;
-    for (const p of puertasLocal) {
-        let doorX, doorY;
-        if (p.dir === 'n') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = p.y * CELL_SIZE; }
-        else if (p.dir === 's') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = (p.y + 1) * CELL_SIZE; }
-        else if (p.dir === 'e') { doorX = (p.x + 1) * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; }
-        else { doorX = p.x * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; }
-
-        const dist = Math.sqrt((centro.x - doorX) ** 2 + (centro.y - doorY) ** 2);
-        if (dist < DIST_APERTURA && dist < mejorDist) { mejor = p; mejorDist = dist; }
-    }
-    return mejor;
-}
-
-// ==================== INPUT ====================
-window.addEventListener('keydown', (e) => {
-    keysDown.add(e.code);
-    if (e.code === 'Space') {
-        e.preventDefault();
-        if (gameOver || victory) return;
-
-        const puerta = puertaCercana();
-        if (puerta) {
-            refPuertas.child(puerta.id).update({ abierta: !puerta.abierta });
-        }
-    }
-    if (e.code === 'KeyR') {
-        if (!gameOver && !victory) recargar();
-    }
-});
-window.addEventListener('keyup', (e) => keysDown.delete(e.code));
-
-canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+// ---------- INTERACCIÓN: CÁMARA (pan + zoom) ----------
+let mouseDownPos = null;
+let cameraStart = { x: 0, y: 0 };
 
 canvas.addEventListener('mousedown', (e) => {
-    if (e.button !== 2) return;
-    disparar();
+  state.dragging = true;
+  canvas.classList.add('grabbing');
+  mouseDownPos = { x: e.clientX, y: e.clientY };
+  cameraStart = { x: state.camera.x, y: state.camera.y };
+});
+window.addEventListener('mouseup', (e) => {
+  if (state.dragging && mouseDownPos) {
+    const dx = e.clientX - mouseDownPos.x;
+    const dy = e.clientY - mouseDownPos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 5) handleCanvasClick(e);
+  }
+  state.dragging = false;
+  canvas.classList.remove('grabbing');
+  mouseDownPos = null;
+});
+window.addEventListener('mousemove', (e) => {
+  if (!state.dragging || !mouseDownPos) return;
+  const dx = e.clientX - mouseDownPos.x;
+  const dy = e.clientY - mouseDownPos.y;
+  state.camera.x = cameraStart.x + dx;
+  state.camera.y = cameraStart.y + dy;
+  draw();
+});
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const worldX = (mx - state.camera.x) / state.camera.zoom;
+  const worldY = (my - state.camera.y) / state.camera.zoom;
+
+  state.camera.zoom = Math.min(2.2, Math.max(0.5, state.camera.zoom * zoomFactor));
+
+  state.camera.x = mx - worldX * state.camera.zoom;
+  state.camera.y = my - worldY * state.camera.zoom;
+  draw();
+}, { passive: false });
+
+// Muestra un tooltip nativo (title del canvas) con el contenido de la Zona
+// de Acopio cuando el cursor pasa por encima de esa casilla en el mapa.
+canvas.addEventListener('mousemove', (e) => {
+  if (state.dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const hex = pixelToHexApprox(x, y);
+  const sd = state.storageDepot;
+
+  if (hex && sd.placed && hex.q === sd.q && hex.r === sd.r) {
+    const s = sd.stored;
+    canvas.title = `Zona de Acopio — Roca: ${s.rock} | Arcilla: ${s.clay} | Arena: ${s.sand} (Total: ${totalStoredCount()}/${STORAGE_DEPOT_CAPACITY})`;
+  } else {
+    canvas.title = '';
+  }
 });
 
-function manejarInput() {
-    if (gameOver || victory) return;
+function pixelToHexApprox(x, y) {
+  const worldX = (x - state.camera.x) / state.camera.zoom;
+  const worldY = (y - state.camera.y) / state.camera.zoom;
 
-    let dx = 0, dy = 0;
-    if (keysDown.has('KeyW') || keysDown.has('ArrowUp')) dy -= 1;
-    if (keysDown.has('KeyS') || keysDown.has('ArrowDown')) dy += 1;
-    if (keysDown.has('KeyA') || keysDown.has('ArrowLeft')) dx -= 1;
-    if (keysDown.has('KeyD') || keysDown.has('ArrowRight')) dx += 1;
+  let closest = null;
+  let closestDist = Infinity;
+  for (const cell of state.grid.values()) {
+    const p = hexToPixel(cell.q, cell.r);
+    const d = (p.x - worldX) ** 2 + (p.y - worldY) ** 2;
+    if (d < closestDist) {
+      closestDist = d;
+      closest = { q: cell.q, r: cell.r };
+    }
+  }
+  return closest;
+}
 
-    if (dx !== 0 || dy !== 0) {
-        const len = Math.sqrt(dx * dx + dy * dy);
-        dx /= len; dy /= len;
-        miJugador.dir = { x: dx, y: dy };
-        intentarMover(miJugador, dx * PLAYER_SPEED, dy * PLAYER_SPEED, PLAYER_SIZE);
+function handleCanvasClick(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const hex = pixelToHexApprox(x, y);
+  if (!hex) return;
+
+  if (state.mode === 'move') {
+    tryMoveTo(hex.q, hex.r);
+  } else {
+    updateHexInfoPanel(hex.q, hex.r);
+  }
+}
+
+// ---------- SONIDO (Web Audio API, sin archivos externos) ----------
+let audioCtx = null;
+let masterGain = null; // nodo de volumen maestro: todo el audio pasa por acá
+
+function ensureAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = state.settings.volume;
+    masterGain.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Todo sonido nuevo debe conectar contra este nodo (en vez de audioCtx.destination
+// directamente) para que el control de volumen maestro los afecte a todos por igual.
+function getMasterGainNode() {
+  ensureAudioCtx();
+  return masterGain;
+}
+
+// Reproduce un tono simple con la forma de onda, frecuencias y duración indicadas.
+function playTone({ type = 'sine', freqStart, freqEnd, duration, volume = 0.22 }) {
+  try {
+    const ctxA = ensureAudioCtx();
+    const now = ctxA.currentTime;
+
+    const osc = ctxA.createOscillator();
+    const gain = ctxA.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freqStart, now);
+    if (freqEnd !== undefined) {
+      osc.frequency.exponentialRampToValueAtTime(freqEnd, now + duration * 0.5);
     }
 
-    const mensaje = document.getElementById('mensajePuerta');
-    mensaje.style.display = puertaCercana() ? 'block' : 'none';
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + duration * 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    osc.connect(gain);
+    gain.connect(getMasterGainNode());
+
+    osc.start(now);
+    osc.stop(now + duration + 0.02);
+  } catch (err) {
+    // Si el navegador bloquea audio (falta interacción previa), lo ignoramos silenciosamente
+  }
 }
 
-// ==================== IA DE ZOMBIES (SOLO el host la ejecuta y la publica) ====================
-function zombieCercaDePuerta(zPos) {
-    const centro = { x: zPos.x + ZOMBIE_SIZE / 2, y: zPos.y + ZOMBIE_SIZE / 2 };
-    const DIST = CELL_SIZE * 0.65;
+// Sonido al DESPLAZARSE: tono agudo y corto, tipo "paso"
+function playMoveSound() {
+  playTone({ type: 'sine', freqStart: 520, freqEnd: 760, duration: 0.14, volume: 0.2 });
+}
 
-    for (const p of puertasLocal) {
-        if (p.abierta) continue;
-        let doorX, doorY;
-        if (p.dir === 'n') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = p.y * CELL_SIZE; }
-        else if (p.dir === 's') { doorX = p.x * CELL_SIZE + CELL_SIZE / 2; doorY = (p.y + 1) * CELL_SIZE; }
-        else if (p.dir === 'e') { doorX = (p.x + 1) * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; }
-        else { doorX = p.x * CELL_SIZE; doorY = p.y * CELL_SIZE + CELL_SIZE / 2; }
+// Sonido al EXTRAER: tono grave tipo "golpe/pico", con textura triangular
+function playExtractSound() {
+  playTone({ type: 'triangle', freqStart: 220, freqEnd: 140, duration: 0.18, volume: 0.25 });
+}
 
-        const dist = Math.sqrt((centro.x - doorX) ** 2 + (centro.y - doorY) ** 2);
-        if (dist < DIST) return p;
+// Sonido al VENDER: doble tono ascendente tipo "cajita registradora"
+function playSellSound() {
+  playTone({ type: 'square', freqStart: 660, freqEnd: 990, duration: 0.1, volume: 0.16 });
+  setTimeout(() => {
+    playTone({ type: 'square', freqStart: 990, freqEnd: 1320, duration: 0.14, volume: 0.18 });
+  }, 90);
+}
+
+// Sonido al COMPRAR maquinaria: tono grave descendente, tipo "trato cerrado"
+function playBuySound() {
+  playTone({ type: 'sawtooth', freqStart: 300, freqEnd: 180, duration: 0.22, volume: 0.14 });
+}
+
+// Sonido de EXPLOSIÓN al usar dinamita: golpe grave y ruidoso, con un "boom" breve
+function playExplosionSound() {
+  try {
+    const ctxA = ensureAudioCtx();
+    const now = ctxA.currentTime;
+
+    // Ruido blanco corto para simular el "crack" de la explosión
+    const bufferSize = ctxA.sampleRate * 0.35;
+    const buffer = ctxA.createBuffer(1, bufferSize, ctxA.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
     }
-    return null;
-}
+    const noise = ctxA.createBufferSource();
+    noise.buffer = buffer;
 
-// Encuentra al jugador vivo mas cercano a un zombie, entre TODOS los jugadores conectados
-function jugadorMasCercano(zPos) {
-    let mejor = null, mejorDist = Infinity;
+    const noiseFilter = ctxA.createBiquadFilter();
+    noiseFilter.type = 'lowpass';
+    noiseFilter.frequency.setValueAtTime(1200, now);
+    noiseFilter.frequency.exponentialRampToValueAtTime(120, now + 0.35);
 
-    const candidatos = [{ id: MI_ID, x: miJugador.x, y: miJugador.y, vida: miJugador.vida }];
-    for (const id in otrosJugadores) {
-        candidatos.push({ id, x: otrosJugadores[id].x, y: otrosJugadores[id].y, vida: otrosJugadores[id].vida });
-    }
+    const noiseGain = ctxA.createGain();
+    noiseGain.gain.setValueAtTime(0.35, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
 
-    for (const j of candidatos) {
-        if (j.vida <= 0) continue;
-        const dx = (j.x + PLAYER_SIZE / 2) - (zPos.x + ZOMBIE_SIZE / 2);
-        const dy = (j.y + PLAYER_SIZE / 2) - (zPos.y + ZOMBIE_SIZE / 2);
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < mejorDist) { mejorDist = dist; mejor = { ...j, dist }; }
-    }
-    return mejor;
-}
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(getMasterGainNode());
+    noise.start(now);
 
-const ZOMBIE_DIST_PRIORIZAR_ATAQUE = CELL_SIZE * 1.4;
-let zombiesInternos = {}; // estado extendido (path, timers) que solo el host necesita
+    // Golpe grave de fondo (el "boom")
+    playTone({ type: 'sine', freqStart: 90, freqEnd: 40, duration: 0.4, volume: 0.3 });
 
-function actualizarZombiesComoHost() {
-    for (const z of zombies) {
-        if (!zombiesInternos[z.id]) {
-            zombiesInternos[z.id] = { path: [], pathTimer: 0, esperandoPuertaDesde: z.esperandoPuertaDesde || null };
-        }
-        const interno = zombiesInternos[z.id];
-        const objetivo = jugadorMasCercano(z.pos);
-
-        if (!objetivo) continue; // no hay jugadores vivos
-
-        const jugadorCerca = objetivo.dist < ZOMBIE_DIST_PRIORIZAR_ATAQUE;
-
-        const puertaFrente = jugadorCerca ? null : zombieCercaDePuerta(z.pos);
-        if (puertaFrente) {
-            if (interno.esperandoPuertaDesde === null) {
-                interno.esperandoPuertaDesde = Date.now();
-            } else if (Date.now() - interno.esperandoPuertaDesde >= ZOMBIE_TIEMPO_ABRIR_PUERTA) {
-                refPuertas.child(puertaFrente.id).update({ abierta: true });
-                interno.esperandoPuertaDesde = null;
-                interno.pathTimer = 0;
-            }
-            refZombies.child(z.id).update({ esperandoPuerta: interno.esperandoPuertaDesde });
-            continue;
-        } else {
-            if (interno.esperandoPuertaDesde !== null) {
-                interno.esperandoPuertaDesde = null;
-                refZombies.child(z.id).update({ esperandoPuerta: null });
-            }
-        }
-
-        let dx, dy;
-
-        if (jugadorCerca) {
-            dx = (objetivo.x + PLAYER_SIZE / 2) - (z.pos.x + ZOMBIE_SIZE / 2);
-            dy = (objetivo.y + PLAYER_SIZE / 2) - (z.pos.y + ZOMBIE_SIZE / 2);
-        } else {
-            interno.pathTimer--;
-            if (interno.pathTimer <= 0) {
-                const zCelda = pixelACelda(z.pos, ZOMBIE_SIZE);
-                const pCelda = pixelACelda({ x: objetivo.x, y: objetivo.y }, PLAYER_SIZE);
-                interno.path = buscarCamino(maze, zCelda, pCelda);
-                interno.pathTimer = 6;
-            }
-
-            let hayObjetivo = false;
-            if (interno.path.length > 0) {
-                const obj = interno.path[0];
-                const objPixel = celdaCentroPixel(obj[0], obj[1], ZOMBIE_SIZE);
-                dx = objPixel.x - z.pos.x;
-                dy = objPixel.y - z.pos.y;
-                hayObjetivo = true;
-
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < z.speed) interno.path.shift();
-            }
-
-            if (!hayObjetivo) {
-                dx = (objetivo.x + PLAYER_SIZE / 2) - (z.pos.x + ZOMBIE_SIZE / 2);
-                dy = (objetivo.y + PLAYER_SIZE / 2) - (z.pos.y + ZOMBIE_SIZE / 2);
-            }
-        }
-
-        const dist2 = Math.sqrt(dx * dx + dy * dy);
-        if (dist2 > 0.1) {
-            const dirX = dx / dist2, dirY = dy / dist2;
-            const movX = { x: z.pos.x + dirX * z.speed, y: z.pos.y };
-            const movY = { x: z.pos.x, y: z.pos.y + dirY * z.speed };
-
-            let nx = z.pos.x, ny = z.pos.y;
-            if (!colisionaConPared(movX, ZOMBIE_SIZE) && !colisionaConPuertaCerrada(movX, ZOMBIE_SIZE)) nx = movX.x;
-            if (!colisionaConPared(movY, ZOMBIE_SIZE) && !colisionaConPuertaCerrada(movY, ZOMBIE_SIZE)) ny = movY.y;
-
-            refZombies.child(z.id).update({ x: nx, y: ny, dirX, dirY });
-            z.pos.x = nx; z.pos.y = ny; // actualizamos localmente tambien para la separacion de abajo
-        }
-
-        // Ataque: si el zombie esta encima de ALGUN jugador, le baja vida
-        // (el host arbitra el daño de todos, pero cada cliente reporta su
-        // propio cooldown de 1 segundo para que sea exacto en su pantalla)
-    }
-
-    aplicarSeparacionEntreZombiesHost();
-}
-
-function aplicarSeparacionEntreZombiesHost() {
-    const DISTANCIA_MINIMA = ZOMBIE_SIZE * 0.9;
-
-    for (let i = 0; i < zombies.length; i++) {
-        for (let j = i + 1; j < zombies.length; j++) {
-            const a = zombies[i], b = zombies[j];
-            const dx = a.pos.x - b.pos.x;
-            const dy = a.pos.y - b.pos.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist < DISTANCIA_MINIMA && dist > 0.01) {
-                const empuje = (DISTANCIA_MINIMA - dist) / 2;
-                const nx = dx / dist, ny = dy / dist;
-
-                const aX = a.pos.x + nx * empuje, aY = a.pos.y + ny * empuje;
-                const bX = b.pos.x - nx * empuje, bY = b.pos.y - ny * empuje;
-
-                refZombies.child(a.id).update({ x: aX, y: aY });
-                refZombies.child(b.id).update({ x: bX, y: bY });
-            }
-        }
-    }
-}
-
-function spawnearZombieEnEsquinaHost() {
-    const esquina = ESQUINAS_SPAWN[Math.floor(Math.random() * ESQUINAS_SPAWN.length)];
-    const pos = celdaCentroPixel(esquina[0], esquina[1], ZOMBIE_SIZE);
-    const nuevoId = 'z' + Date.now() + Math.floor(Math.random() * 1000);
-    refZombies.child(nuevoId).set({
-        x: pos.x, y: pos.y,
-        dirX: 0, dirY: 1,
-        speed: (1.6 + Math.random() * 0.5) * 1.25,
-        vida: ZOMBIE_VIDA_MAXIMA,
-        esperandoPuerta: null
-    });
-}
-
-// ==================== DISPAROS Y MUNICION (cada cliente simula sus propias balas) ====================
-function disparar() {
-    if (gameOver || victory) return;
-    if (miJugador.municion <= 0) return;
-
-    miJugador.municion--;
-    actualizarHud();
-
-    const centro = { x: miJugador.x + PLAYER_SIZE / 2, y: miJugador.y + PLAYER_SIZE / 2 };
-    const nuevaBala = { x: centro.x, y: centro.y, dx: miJugador.dir.x, dy: miJugador.dir.y, autor: MI_ID };
-    bullets.push(nuevaBala);
-
-    // Publicamos la bala para que los demas clientes tambien la vean
-    const balaRef = refBullets.push(nuevaBala);
-    nuevaBala.key = balaRef.key;
-    // La borramos de la base de datos luego de 2 segundos (tiempo de vuelo maximo razonable)
-    setTimeout(() => balaRef.remove(), 2000);
-}
-
-function recargar() {
-    miJugador.municion = MUNICION_MAXIMA;
-    actualizarHud();
-}
-
-function actualizarBalas() {
-    for (let i = bullets.length - 1; i >= 0; i--) {
-        const b = bullets[i];
-
-        // Las balas remotas (de otros jugadores) solo se dibujan y se
-        // chequean contra zombies si YO soy el host (para no duplicar el
-        // daño); las propias siempre las simulo yo.
-        if (b.remoto) {
-            // Solo avanzamos su posicion local para dibujarla suavemente
-            b.x += b.dx * BULLET_SPEED;
-            b.y += b.dy * BULLET_SPEED;
-            continue;
-        }
-
-        const nx = b.x + b.dx * BULLET_SPEED;
-        const ny = b.y + b.dy * BULLET_SPEED;
-
-        if (nx < 0 || ny < 0 || nx >= MAZE_COLS * CELL_SIZE || ny >= MAZE_ROWS * CELL_SIZE
-            || colisionaConPared({ x: nx - BULLET_RADIUS, y: ny - BULLET_RADIUS }, BULLET_RADIUS * 2)
-            || colisionaConPuertaCerrada({ x: nx - BULLET_RADIUS, y: ny - BULLET_RADIUS }, BULLET_RADIUS * 2)) {
-            bullets.splice(i, 1);
-            if (b.key) refBullets.child(b.key).remove();
-            continue;
-        }
-
-        b.x = nx; b.y = ny;
-
-        for (const z of zombies) {
-            const zdx = b.x - (z.pos.x + ZOMBIE_SIZE / 2);
-            const zdy = b.y - (z.pos.y + ZOMBIE_SIZE / 2);
-            if (Math.sqrt(zdx * zdx + zdy * zdy) < ZOMBIE_SIZE / 2 + BULLET_RADIUS) {
-                bullets.splice(i, 1);
-                if (b.key) refBullets.child(b.key).remove();
-
-                // Restamos vida al zombie de forma atomica (varios jugadores
-                // podrian dispararle al mismo tiempo)
-                refZombies.child(z.id).transaction((actual) => {
-                    if (!actual) return actual;
-                    actual.vida = (actual.vida || ZOMBIE_VIDA_MAXIMA) - 1;
-                    return actual;
-                }).then((resultado) => {
-                    if (resultado.committed && resultado.snapshot.val() && resultado.snapshot.val().vida <= 0) {
-                        refZombies.child(z.id).remove();
-                        miJugador.kills++;
-                        actualizarHud();
-                    }
-                });
-                break;
-            }
-        }
-    }
-}
-
-// ==================== RECOGER CAJAS DE MUNICION ====================
-function verificarCajasMunicion() {
-    const centro = { x: miJugador.x + PLAYER_SIZE / 2, y: miJugador.y + PLAYER_SIZE / 2 };
-
-    for (const caja of cajasMunicion) {
-        if (caja.recogida) continue;
-
-        const cajaPixel = celdaCentroPixel(caja.x, caja.y, 20);
-        const cx = cajaPixel.x + 10, cy = cajaPixel.y + 10;
-        const dist = Math.sqrt((centro.x - cx) ** 2 + (centro.y - cy) ** 2);
-
-        if (dist < 22) {
-            // Transaccion para que si 2 jugadores llegan a la vez, solo uno la recoja
-            refCajasMun.child(caja.id).transaction((actual) => {
-                if (!actual || actual.recogida) return actual;
-                actual.recogida = true;
-                return actual;
-            }).then((resultado) => {
-                if (resultado.committed && resultado.snapshot.val() && resultado.snapshot.val().recogida) {
-                    miJugador.municion += MUNICION_POR_CAJA;
-                    actualizarHud();
-                }
+    // Pequeños chasquidos de fragmentos de roca cayendo, justo después del boom
+    setTimeout(() => {
+      try {
+        const ctxB = ensureAudioCtx();
+        for (let i = 0; i < 4; i++) {
+          setTimeout(() => {
+            playTone({
+              type: 'triangle',
+              freqStart: 320 + Math.random() * 260,
+              freqEnd: 140 + Math.random() * 80,
+              duration: 0.08,
+              volume: 0.1,
             });
+          }, i * 55);
         }
-    }
+      } catch (err) { /* silencioso */ }
+    }, 180);
+  } catch (err) {
+    // Si el navegador bloquea audio, lo ignoramos silenciosamente
+  }
 }
 
-// ==================== SISTEMA DE REPARACION DE CAJAS ====================
-function cajaReparacionCercana() {
-    const centro = { x: miJugador.x + PLAYER_SIZE / 2, y: miJugador.y + PLAYER_SIZE / 2 };
-    const DIST_REPARAR = 24;
+// Sonido de LLUVIA: ruido blanco filtrado y sostenido, simulando la lluvia
+// cayendo, con un par de "truenos" graves lejanos de fondo.
+function playRainSound() {
+  try {
+    const ctxA = ensureAudioCtx();
+    const now = ctxA.currentTime;
+    const duration = 4.5;
 
-    for (const caja of cajasReparacion) {
-        if (caja.reparada) continue;
-        const cajaPixel = celdaCentroPixel(caja.x, caja.y, 22);
-        const cx = cajaPixel.x + 11, cy = cajaPixel.y + 11;
-        const dist = Math.sqrt((centro.x - cx) ** 2 + (centro.y - cy) ** 2);
-        if (dist < DIST_REPARAR) return caja;
+    // Ruido blanco sostenido para el "shhhh" constante de la lluvia
+    const bufferSize = ctxA.sampleRate * duration;
+    const buffer = ctxA.createBuffer(1, bufferSize, ctxA.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
     }
-    return null;
+    const noise = ctxA.createBufferSource();
+    noise.buffer = buffer;
+
+    const noiseFilter = ctxA.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.setValueAtTime(2400, now);
+    noiseFilter.Q.value = 0.7;
+
+    const noiseGain = ctxA.createGain();
+    noiseGain.gain.setValueAtTime(0.0001, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.09, now + 0.6);
+    noiseGain.gain.setValueAtTime(0.09, now + duration - 0.8);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(getMasterGainNode());
+    noise.start(now);
+    noise.stop(now + duration + 0.05);
+
+    // Un trueno grave y lejano, para reforzar el ambiente de tormenta
+    setTimeout(() => {
+      playTone({ type: 'sine', freqStart: 70, freqEnd: 35, duration: 0.9, volume: 0.12 });
+    }, 700);
+  } catch (err) {
+    // Si el navegador bloquea audio, lo ignoramos silenciosamente
+  }
 }
 
-function zombieMasCercanoDistancia() {
-    if (zombies.length === 0) return Infinity;
-    const centro = { x: miJugador.x + PLAYER_SIZE / 2, y: miJugador.y + PLAYER_SIZE / 2 };
-    let minDist = Infinity;
-    for (const z of zombies) {
-        const dx = centro.x - (z.pos.x + ZOMBIE_SIZE / 2);
-        const dy = centro.y - (z.pos.y + ZOMBIE_SIZE / 2);
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < minDist) minDist = dist;
-    }
-    return minDist;
+// Sonido de ESCANEO: un barrido electrónico ascendente, tipo "beep" de radar
+function playScannerSound() {
+  playTone({ type: 'sine', freqStart: 400, freqEnd: 1400, duration: 0.35, volume: 0.15 });
+  setTimeout(() => {
+    playTone({ type: 'sine', freqStart: 900, freqEnd: 1800, duration: 0.2, volume: 0.1 });
+  }, 200);
 }
 
-let progresoReparacionLocal = 0; // tiempo acumulado en ESTA sesion reparando la caja actual
-
-function actualizarReparacion() {
-    const cajaCerca = cajaReparacionCercana();
-    const panel = document.getElementById('panelReparacion');
-    const barra = document.getElementById('barraReparacion');
-    const aviso = document.getElementById('avisoPeligro');
-
-    if (cajaReparandoActual && (!cajaCerca || cajaCerca.id !== cajaReparandoActual.id)) {
-        cajaReparandoActual = null;
-        progresoReparacionLocal = 0;
-    }
-
-    if (cajaCerca && !cajaCerca.reparada) {
-        if (!cajaReparandoActual || cajaReparandoActual.id !== cajaCerca.id) {
-            cajaReparandoActual = cajaCerca;
-            progresoReparacionLocal = 0;
-        }
-
-        progresoReparacionLocal += 16; // ~1 frame a 60fps
-        const progreso = Math.min(progresoReparacionLocal / REPARACION_DURACION_MS, 1);
-
-        panel.style.display = 'block';
-        barra.style.width = (progreso * 100) + '%';
-
-        const distZombie = zombieMasCercanoDistancia();
-        aviso.style.display = distZombie < REPARACION_DIST_ZOMBIE_PELIGRO ? 'block' : 'none';
-
-        if (progreso >= 1) {
-            refCajasRep.child(cajaCerca.id).update({ reparada: true });
-            cajaReparandoActual = null;
-            progresoReparacionLocal = 0;
-            panel.style.display = 'none';
-        }
-    } else {
-        panel.style.display = 'none';
-    }
+// Sonido de TELETRANSPORTE: barrido rápido tipo "whoosh" electrónico
+function playTeleportSound() {
+  playTone({ type: 'sawtooth', freqStart: 200, freqEnd: 1200, duration: 0.25, volume: 0.14 });
+  setTimeout(() => {
+    playTone({ type: 'sine', freqStart: 1200, freqEnd: 600, duration: 0.15, volume: 0.12 });
+  }, 150);
 }
 
-// ==================== COLISIONES JUGADOR-ZOMBIE (cooldown de 1 segundo) ====================
-function verificarColisiones() {
-    for (const z of zombies) {
-        const dx = (miJugador.x + PLAYER_SIZE / 2) - (z.pos.x + ZOMBIE_SIZE / 2);
-        const dy = (miJugador.y + PLAYER_SIZE / 2) - (z.pos.y + ZOMBIE_SIZE / 2);
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < (PLAYER_SIZE + ZOMBIE_SIZE) / 2.2) {
-            const ahora = Date.now();
-            // COOLDOWN: tras ser atacado, pasa 1 segundo completo antes de
-            // que un zombie pueda volver a hacerte daño.
-            if (ahora - miJugador.ultimoGolpe >= COOLDOWN_GOLPE_MS) {
-                miJugador.ultimoGolpe = ahora;
-                miJugador.vida -= DAÑO_POR_GOLPE;
-                actualizarHud();
-
-                if (miJugador.vida <= 0) {
-                    miJugador.vida = 0;
-                    actualizarHud();
-                    verificarSiTodosMurieron();
-                }
-            }
-            break;
-        }
-    }
+// ---------- LÓGICA DE JUEGO ----------
+// El registro visual se quitó de la interfaz (el usuario pidió menos información en pantalla).
+// Esta función se deja como no-op segura para no tener que tocar cada punto de aviso del código;
+// los mensajes solo quedan disponibles en la consola del navegador por si hace falta depurar.
+function log(msg, warn = false) {
+  // console.debug(msg); // descomentar si se necesita depurar
 }
 
-function verificarSiTodosMurieron() {
-    // Solo se declara Game Over para toda la sala si TODOS los jugadores
-    // conectados llegaron a 0 de vida (asi el resto puede seguir jugando
-    // y potencialmente reanimar la partida en una version futura).
-    const todosMuertos = miJugador.vida <= 0 &&
-        Object.values(otrosJugadores).every(j => j.vida <= 0);
-
-    if (todosMuertos && esHost) {
-        declararResultado('derrota', 'Todos los jugadores cayeron.');
-    }
+// Aviso breve en pantalla para mensajes importantes de bloqueo de acción
+// (ej: "la roca solo puede extraerse con dinamita"). Distinto del log narrativo,
+// que el usuario pidió no mostrar.
+let toastTimeout = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
-function declararResultado(resultado, mensaje) {
-    refEstado.update({
-        juegoTerminado: true,
-        resultado,
-        mensajeResultado: mensaje
+function spendTick(soundFn) {
+  if (state.ticksLeft <= 0) return false;
+  state.ticksLeft--;
+  if (soundFn) soundFn();
+  updateTicksUI();
+  return true;
+}
+
+function updateTicksUI() {
+  const maxTicks = getMaxTicksForCurrentTurn();
+  document.getElementById('ticksLeft').textContent = state.ticksLeft;
+  document.getElementById('dayCount').textContent = state.day;
+
+  const row = document.getElementById('ticksRow');
+  row.innerHTML = '';
+  for (let i = 0; i < maxTicks; i++) {
+    const dot = document.createElement('div');
+    // Los ticks extra que da la Torre de Luz de noche (índice 3 y 4) se pintan
+    // de amarillo, haciendo referencia a que son gracias a la iluminación.
+    const isLightTowerBonusTick = !state.isDayTime && state.machines.machine5 && i >= MAX_TICKS_NIGHT;
+    let cls = 'tickDot';
+    if (i >= state.ticksLeft) cls += ' spent';
+    if (isLightTowerBonusTick) cls += ' lightBonus';
+    dot.className = cls;
+    row.appendChild(dot);
+  }
+
+  updateTurnDisplay();
+  updateDayProgressBar();
+  if (state.ticksLeft <= 0) {
+    setMode(null);
+    scheduleAutoEndTurn();
+  }
+}
+
+// Cuando se acaban los ticks del turno, el juego pasa solo al siguiente
+// turno (Día -> Noche -> Día...) sin que el jugador tenga que confirmar
+// nada. El pequeño delay deja ver el resultado de la última acción antes
+// de que cambie el turno.
+let autoEndTurnTimeout = null;
+function scheduleAutoEndTurn() {
+  if (state.gameOver) return;
+  if (autoEndTurnTimeout) clearTimeout(autoEndTurnTimeout);
+  autoEndTurnTimeout = setTimeout(() => {
+    if (state.ticksLeft <= 0 && !state.gameOver) endTurn();
+  }, 900);
+}
+
+function updateTurnDisplay() {
+  const el = document.getElementById('turnTopDisplay');
+  if (state.isDayTime) {
+    el.textContent = '☀️ Turno Día';
+    el.classList.remove('night');
+  } else {
+    el.textContent = '🌙 Turno Noche';
+    el.classList.add('night');
+  }
+}
+
+// Dibuja las 10 bolitas de progreso de días. La bolita del día de lluvia
+// lleva un aro azul para marcarla, incluso después de haber pasado.
+function updateDayProgressBar() {
+  const bar = document.getElementById('dayProgressBar');
+  bar.innerHTML = '';
+  for (let d = 1; d <= TOTAL_GAME_DAYS; d++) {
+    const dot = document.createElement('div');
+    let cls = 'dayDot';
+    if (d < state.day) cls += ' past';
+    if (d === state.day) cls += ' current';
+    if (d === RAIN_DAY) cls += ' rainDay';
+    dot.className = cls;
+    dot.title = d === RAIN_DAY ? `Día ${d} (día de lluvia)` : `Día ${d}`;
+    bar.appendChild(dot);
+  }
+}
+
+// Oscurece o aclara el mapa según el turno actual.
+function updateMapLighting() {
+  const overlay = document.getElementById('nightOverlay');
+  overlay.classList.toggle('active', !state.isDayTime);
+}
+
+function setMode(mode) {
+  if (state.ticksLeft <= 0) mode = null;
+  state.mode = mode;
+
+  document.getElementById('btnDesplazar').classList.toggle('active', mode === 'move');
+  document.getElementById('btnExtraer').classList.toggle('active', mode === 'extract');
+
+  if (mode === 'move') {
+    // El Camión Góndola permite desplazarse 2 casillas por tick en vez de 1.
+    const moveRange = state.machines.machine4 ? 2 : 1;
+    state.highlightHexes = getReachableHexes(state.playerQ, state.playerR, moveRange);
+  } else {
+    state.highlightHexes = [];
+  }
+  draw();
+}
+
+function tryMoveTo(q, r) {
+  const isNeighbor = state.highlightHexes.some(h => h.q === q && h.r === r);
+  if (!isNeighbor) {
+    log('Ese hexágono no es un destino válido. Elegí uno con borde verde.', true);
+    return;
+  }
+  if (!spendTick(playMoveSound)) {
+    log('No te quedan ticks este turno.', true);
+    return;
+  }
+  state.playerQ = q;
+  state.playerR = r;
+  log(`Te desplazaste a (${q}, ${r}).`);
+  setMode(null);
+  updateHexInfoPanel(q, r);
+  // La cámara ya NO se recentra automáticamente al moverse: se queda donde el jugador la dejó.
+  draw();
+}
+
+// Si el jugador está parado sobre el Punto A o el Punto B del Campamento Base
+// (con ambos ya colocados), lo teletransporta al instante al otro punto.
+// Se dispara solo al tocar el botón "Teletransportar", nunca automáticamente
+// por pasar por encima de la casilla.
+function useCampBaseTeleport() {
+  const { pointA, pointB } = state.campBase;
+  if (!pointA || !pointB) return;
+
+  const atA = state.playerQ === pointA.q && state.playerR === pointA.r;
+  const atB = state.playerQ === pointB.q && state.playerR === pointB.r;
+  if (!atA && !atB) return;
+
+  const destination = atA ? pointB : pointA;
+  state.playerQ = destination.q;
+  state.playerR = destination.r;
+  playTeleportSound();
+  log(`Te teletransportaste al ${atA ? 'Punto B' : 'Punto A'} del campamento.`);
+  updateHexInfoPanel(state.playerQ, state.playerR);
+  centerCameraOnPlayer();
+  draw();
+}
+
+function tryExtract() {
+  const cell = getCell(state.playerQ, state.playerR);
+
+  // Si hay una Extractora de Petróleo instalada en esta celda, extraer
+  // petróleo tiene prioridad y usa su propia cantidad (oilAmount), separada
+  // del recurso de superficie que tenía esa casilla.
+  if (cell.oilExtracted) {
+    tryExtractOil(cell);
+    return;
+  }
+
+  const invKey = EXTRACTABLE[cell.terrain];
+
+  if (!invKey) {
+    showToast('En este terreno no hay nada para extraer.');
+    setMode(null);
+    return;
+  }
+
+  // La roca no se puede extraer hasta volarla con dinamita.
+  if (cell.terrain === TERRAIN.ROCK && !cell.blasted) {
+    showToast('La roca solo puede ser extraída con dinamita. Primero hay que reventarla.');
+    setMode(null);
+    return;
+  }
+
+  // Las zonas premium (préstamo) hay que comprarlas antes de poder extraer ahí.
+  if (cell.isPremium && !cell.premiumPurchased) {
+    showToast('Esta zona hay que comprarla primero para poder extraer acá.');
+    setMode(null);
+    return;
+  }
+
+  // Arena y arcilla mojadas por la lluvia no se pueden extraer hasta que se sequen.
+  if (cell.wet) {
+    if (cell.terrain === TERRAIN.CLAY) {
+      showToast('Esta arcilla está embarrada por la lluvia, esperá a que se seque.');
+    } else if (cell.terrain === TERRAIN.SAND) {
+      showToast('Esta arena está mojada por la lluvia, esperá a que se seque.');
+    }
+    setMode(null);
+    return;
+  }
+
+  if (cell.resourceAmount <= 0) {
+    showToast('Este recurso ya está agotado en este hex.');
+    setMode(null);
+    return;
+  }
+
+  // Límite de inventario: no se puede cargar más del máximo total permitido.
+  const spaceLeft = INVENTORY_LIMIT - totalInventoryCount();
+  if (spaceLeft <= 0) {
+    showToast(`Tu inventario está lleno (máximo ${INVENTORY_LIMIT}). Andá a vender antes de seguir extrayendo.`);
+    setMode(null);
+    return;
+  }
+
+  if (!spendTick(playExtractSound)) {
+    showToast('No te quedan ticks este turno.');
+    return;
+  }
+
+  // La retroexcavadora duplica la velocidad de extracción en cualquier material,
+  // pero nunca hace que el inventario supere el límite total permitido.
+  const usesExcavatorBonus = state.machines.excavator;
+  const desiredAmount = usesExcavatorBonus ? 2 : 1;
+  const amountToExtract = Math.min(cell.resourceAmount, desiredAmount, spaceLeft);
+
+  cell.resourceAmount -= amountToExtract;
+  state.inventory[invKey] += amountToExtract;
+  updateInventoryUI();
+
+  if (cell.resourceAmount <= 0) {
+    cell.depleted = true; // se pinta verde oscuro para marcar que ya fue extraído del todo
+    log(`Extrajiste ${amountToExtract} unidad(es) de ${TERRAIN_LABEL[cell.terrain].toLowerCase()}. Este hex quedó agotado.`);
+  } else {
+    log(`Extrajiste ${amountToExtract} unidad(es) de ${TERRAIN_LABEL[cell.terrain].toLowerCase()}. Quedan ${cell.resourceAmount} en este hex.`);
+  }
+
+  updateHexInfoPanel(state.playerQ, state.playerR);
+  setMode(null);
+  draw();
+}
+
+// Extrae petróleo de una celda con la Extractora ya instalada. Sigue las
+// mismas reglas de límite de inventario y bonus de excavadora que el resto.
+function tryExtractOil(cell) {
+  if (cell.oilAmount <= 0) {
+    showToast('Este pozo de petróleo ya está agotado.');
+    setMode(null);
+    return;
+  }
+
+  const spaceLeft = INVENTORY_LIMIT - totalInventoryCount();
+  if (spaceLeft <= 0) {
+    showToast(`Tu inventario está lleno (máximo ${INVENTORY_LIMIT}). Andá a vender antes de seguir extrayendo.`);
+    setMode(null);
+    return;
+  }
+
+  if (!spendTick(playExtractSound)) {
+    showToast('No te quedan ticks este turno.');
+    return;
+  }
+
+  const usesExcavatorBonus = state.machines.excavator;
+  const desiredAmount = usesExcavatorBonus ? 2 : 1;
+  const amountToExtract = Math.min(cell.oilAmount, desiredAmount, spaceLeft);
+
+  cell.oilAmount -= amountToExtract;
+  state.inventory.oil += amountToExtract;
+  updateInventoryUI();
+
+  if (cell.oilAmount <= 0) {
+    log(`Extrajiste ${amountToExtract} unidad(es) de petróleo. Este pozo quedó agotado.`);
+  } else {
+    log(`Extrajiste ${amountToExtract} unidad(es) de petróleo. Quedan ${cell.oilAmount} en este pozo.`);
+  }
+
+  updateHexInfoPanel(state.playerQ, state.playerR);
+  setMode(null);
+  draw();
+}
+
+// ---------- USAR DINAMITA ----------
+// Animación de fragmentos de roca disparándose desde el hex explotado.
+let explosionFx = null; // { x, y, startTime, fragments: [...] }
+
+function triggerExplosionFx(worldX, worldY) {
+  const fragments = [];
+  const fragmentCount = 10;
+  for (let i = 0; i < fragmentCount; i++) {
+    const angle = (Math.PI * 2 * i) / fragmentCount + (Math.random() - 0.5) * 0.4;
+    const speed = 22 + Math.random() * 18;
+    fragments.push({
+      angle,
+      speed,
+      size: 3 + Math.random() * 4,
+      rotSpeed: (Math.random() - 0.5) * 8,
     });
+  }
+  explosionFx = { x: worldX, y: worldY, startTime: performance.now(), fragments };
+  requestAnimationFrame(animateExplosion);
 }
 
-function verificarVictoria() {
-    if (gameOver || victory) return;
-    if (!esHost) return; // solo el host decide y publica la victoria
+function animateExplosion(now) {
+  if (!explosionFx) return;
+  const elapsed = (now - explosionFx.startTime) / 1000; // segundos
+  const DURATION = 0.6;
 
-    const reparadas = cajasReparacion.filter(c => c.reparada).length;
-    if (reparadas >= 4) {
-        declararResultado('victoria', 'Repararon las 4 cajas.');
-        return;
-    }
+  draw(); // redibuja el mapa base
 
-    if (zombies.length === 0 && (miJugador.kills > 0 || Object.values(otrosJugadores).some(j => j.kills > 0))) {
-        declararResultado('victoria', 'Eliminaron a todos los zombies.');
-    }
-}
-
-function mostrarOverlay(titulo, subtitulo, color) {
-    const overlay = document.getElementById('overlay');
-    const t = document.getElementById('overlayTitle');
-    const s = document.getElementById('overlaySubtitle');
-    t.textContent = titulo;
-    t.style.color = color;
-    s.textContent = subtitulo + ' — La sala se reinicia para la próxima partida';
-    overlay.style.display = 'flex';
-}
-
-// ==================== SPAWN PERIODICO (solo el host lo dispara) ====================
-setInterval(() => {
-    if (!esHost || gameOver || victory) return;
-    spawnearZombieEnEsquinaHost();
-}, INTERVALO_SPAWN_MS);
-
-// ==================== RENDER ====================
-function dibujarFondo() {
-    ctx.fillStyle = '#3a3a40';
-    ctx.fillRect(0, 0, MAZE_COLS * CELL_SIZE, MAZE_ROWS * CELL_SIZE);
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= MAZE_COLS; x++) {
-        ctx.beginPath();
-        ctx.moveTo(x * CELL_SIZE, 0);
-        ctx.lineTo(x * CELL_SIZE, MAZE_ROWS * CELL_SIZE);
-        ctx.stroke();
-    }
-    for (let y = 0; y <= MAZE_ROWS; y++) {
-        ctx.beginPath();
-        ctx.moveTo(0, y * CELL_SIZE);
-        ctx.lineTo(MAZE_COLS * CELL_SIZE, y * CELL_SIZE);
-        ctx.stroke();
-    }
-}
-
-function dibujarLaberinto() {
-    ctx.strokeStyle = '#e8e8e8';
-    ctx.lineWidth = 4;
-    ctx.lineCap = 'round';
-
-    for (let x = 0; x < MAZE_COLS; x++) {
-        for (let y = 0; y < MAZE_ROWS; y++) {
-            const celda = maze[x][y];
-            const px = x * CELL_SIZE;
-            const py = y * CELL_SIZE;
-
-            ctx.beginPath();
-            if (celda.n) { ctx.moveTo(px, py); ctx.lineTo(px + CELL_SIZE, py); }
-            if (celda.s) { ctx.moveTo(px, py + CELL_SIZE); ctx.lineTo(px + CELL_SIZE, py + CELL_SIZE); }
-            if (celda.w) { ctx.moveTo(px, py); ctx.lineTo(px, py + CELL_SIZE); }
-            if (celda.e) { ctx.moveTo(px + CELL_SIZE, py); ctx.lineTo(px + CELL_SIZE, py + CELL_SIZE); }
-            ctx.stroke();
-        }
-    }
-}
-
-function dibujarPuertas() {
-    for (const p of puertasLocal) {
-        let x1, y1, x2, y2, cx, cy;
-        if (p.dir === 'n') { x1 = p.x * CELL_SIZE; y1 = p.y * CELL_SIZE; x2 = x1 + CELL_SIZE; y2 = y1; cx = x1; cy = y1; }
-        else if (p.dir === 's') { x1 = p.x * CELL_SIZE; y1 = (p.y + 1) * CELL_SIZE; x2 = x1 + CELL_SIZE; y2 = y1; cx = x1; cy = y1; }
-        else if (p.dir === 'e') { x1 = (p.x + 1) * CELL_SIZE; y1 = p.y * CELL_SIZE; x2 = x1; y2 = y1 + CELL_SIZE; cx = x1; cy = y1; }
-        else { x1 = p.x * CELL_SIZE; y1 = p.y * CELL_SIZE; x2 = x1; y2 = y1 + CELL_SIZE; cx = x1; cy = y1; }
-
-        ctx.save();
-
-        if (p.abierta) {
-            ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
-            ctx.lineWidth = 4;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            if (p.dir === 'n' || p.dir === 's') {
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + 4, cy + (p.dir === 'n' ? -26 : 26));
-            } else {
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + (p.dir === 'e' ? 26 : -26), cy + 4);
-            }
-            ctx.stroke();
-        } else {
-            ctx.strokeStyle = '#ffd700';
-            ctx.lineWidth = 5;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-
-            ctx.strokeStyle = '#3a3a00';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo((x1 + x2) / 2 - 5, (y1 + y2) / 2 - 5);
-            ctx.lineTo((x1 + x2) / 2 + 5, (y1 + y2) / 2 + 5);
-            ctx.stroke();
-        }
-        ctx.restore();
-    }
-}
-
-function dibujarCajasMunicion() {
-    for (const caja of cajasMunicion) {
-        if (caja.recogida) continue;
-
-        const pos = celdaCentroPixel(caja.x, caja.y, 18);
-        const flotacion = Math.sin(performance.now() / 300) * 3;
-
-        ctx.fillStyle = '#8d6e2f';
-        ctx.fillRect(pos.x, pos.y + flotacion, 18, 14);
-        ctx.strokeStyle = '#c9a227';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(pos.x, pos.y + flotacion, 18, 14);
-
-        ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 9px Consolas';
-        ctx.textAlign = 'center';
-        ctx.fillText('+5', pos.x + 9, pos.y + flotacion + 10);
-    }
-}
-
-function dibujarCajasReparacion() {
-    for (const caja of cajasReparacion) {
-        const pos = celdaCentroPixel(caja.x, caja.y, 26);
-        const cx = pos.x + 13, cy = pos.y + 13;
-
-        if (caja.reparada) {
-            ctx.fillStyle = '#2ecc71';
-            ctx.fillRect(pos.x, pos.y, 26, 22);
-            ctx.strokeStyle = '#1a8f4c';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(pos.x, pos.y, 26, 22);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 14px Consolas';
-            ctx.textAlign = 'center';
-            ctx.fillText('✓', cx, cy + 5);
-        } else {
-            const pulso = 0.5 + 0.5 * Math.sin(performance.now() / 300);
-            ctx.fillStyle = `rgba(255, 165, 0, ${0.5 + pulso * 0.3})`;
-            ctx.fillRect(pos.x, pos.y, 26, 22);
-            ctx.strokeStyle = '#ff8c00';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(pos.x, pos.y, 26, 22);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 12px Consolas';
-            ctx.textAlign = 'center';
-            ctx.fillText('🔧', cx, cy + 5);
-        }
-    }
-}
-
-// Dibuja un personaje generico (usado para mi jugador y para los demas,
-// solo cambia el color y si aplica el parpadeo de invulnerabilidad)
-function dibujarPersonaje(x, y, dir, color, nombre, ultimoGolpe) {
-    const cx = x + PLAYER_SIZE / 2;
-    const cy = y + PLAYER_SIZE / 2;
-    const angulo = Math.atan2(dir.y, dir.x);
-
-    const enCooldown = (Date.now() - (ultimoGolpe || 0)) < COOLDOWN_GOLPE_MS;
-    const parpadeoOculto = enCooldown && Math.floor(Date.now() / 100) % 2 === 0;
-
-    if (!parpadeoOculto) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(angulo + Math.PI / 2);
-
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.beginPath();
-        ctx.ellipse(0, 2, 10, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.ellipse(0, 2, 9, 11, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#ffcc99';
-        ctx.beginPath();
-        ctx.arc(0, -8, 6, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(-3, -10);
-        ctx.lineTo(3, -10);
-        ctx.lineTo(0, -18);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.restore();
-    }
-
-    // Nombre siempre visible (aunque este parpadeando por invulnerabilidad)
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 10px Consolas';
-    ctx.textAlign = 'center';
-    ctx.fillText(nombre, cx, cy - 24);
-}
-
-function dibujarJugadores() {
-    dibujarPersonaje(miJugador.x, miJugador.y, miJugador.dir, miJugador.color, miJugador.nombre + ' (tú)', miJugador.ultimoGolpe);
-
-    for (const id in otrosJugadores) {
-        const j = otrosJugadores[id];
-        if (j.vida <= 0) continue;
-        dibujarPersonaje(j.x, j.y, { x: j.dirX, y: j.dirY }, j.color, j.nombre, j.ultimoGolpe);
-    }
-}
-
-function dibujarZombie(z) {
-    const cx = z.pos.x + ZOMBIE_SIZE / 2;
-    const cy = z.pos.y + ZOMBIE_SIZE / 2;
-    const angulo = Math.atan2(z.dir.y, z.dir.x);
-    const t = performance.now() / 150;
-
+  if (elapsed < DURATION) {
+    const t = elapsed / DURATION;
     ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(angulo + Math.PI / 2);
+    ctx.translate(state.camera.x, state.camera.y);
+    ctx.scale(state.camera.zoom, state.camera.zoom);
 
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.beginPath();
-    ctx.ellipse(0, 2, 12, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // Destello inicial
+    if (elapsed < 0.15) {
+      const flashAlpha = 1 - (elapsed / 0.15);
+      ctx.fillStyle = `rgba(255, 220, 150, ${flashAlpha * 0.6})`;
+      ctx.beginPath();
+      ctx.arc(explosionFx.x, explosionFx.y, HEX_SIZE * (0.5 + t * 0.8), 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-    ctx.strokeStyle = '#3a6b1f';
-    ctx.lineWidth = 3.5;
-    ctx.lineCap = 'round';
-    const balanceo = Math.sin(t) * 3;
+    // Fragmentos de roca disparándose hacia afuera
+    explosionFx.fragments.forEach(f => {
+      const dist = f.speed * elapsed;
+      const fx = explosionFx.x + Math.cos(f.angle) * dist;
+      const fy = explosionFx.y + Math.sin(f.angle) * dist - (elapsed * elapsed * 40); // pequeña gravedad hacia arriba/abajo
+      const alpha = Math.max(0, 1 - t);
 
-    ctx.beginPath();
-    ctx.moveTo(-6, 0);
-    ctx.lineTo(-10 + balanceo, -10);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(6, 0);
-    ctx.lineTo(10 - balanceo, -10);
-    ctx.stroke();
-
-    ctx.fillStyle = '#4caf50';
-    ctx.beginPath();
-    ctx.ellipse(0, 2, 10, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#2e5e1a';
-    ctx.beginPath();
-    ctx.ellipse(3, 5, 3, 4, 0.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#6fae52';
-    ctx.beginPath();
-    ctx.arc(0, -9, 6.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#ff1111';
-    ctx.beginPath();
-    ctx.arc(-2.5, -10, 1.3, 0, Math.PI * 2);
-    ctx.arc(2.5, -10, 1.3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#1b1b1b';
-    ctx.beginPath();
-    ctx.ellipse(0, -6, 2.5, 1.5, 0, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.save();
+      ctx.translate(fx, fy);
+      ctx.rotate(elapsed * f.rotSpeed);
+      ctx.fillStyle = `rgba(107, 111, 118, ${alpha})`;
+      ctx.strokeStyle = `rgba(40, 42, 46, ${alpha})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      // Fragmento con forma irregular tipo roca partida
+      ctx.moveTo(-f.size, -f.size * 0.6);
+      ctx.lineTo(f.size * 0.5, -f.size);
+      ctx.lineTo(f.size, f.size * 0.3);
+      ctx.lineTo(0, f.size);
+      ctx.lineTo(-f.size * 0.8, f.size * 0.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    });
 
     ctx.restore();
+    requestAnimationFrame(animateExplosion);
+  } else {
+    explosionFx = null;
+    draw();
+  }
+}
 
-    const espacioBolita = 8;
-    const inicioX = cx - ((ZOMBIE_VIDA_MAXIMA - 1) * espacioBolita) / 2;
-    for (let i = 0; i < ZOMBIE_VIDA_MAXIMA; i++) {
-        const activa = i < z.vida;
-        ctx.beginPath();
-        ctx.arc(inicioX + i * espacioBolita, cy - 22, 3.2, 0, Math.PI * 2);
-        ctx.fillStyle = activa ? '#4dff4d' : 'rgba(255,255,255,0.15)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+function tryUseDynamite() {
+  const cell = getCell(state.playerQ, state.playerR);
+
+  if (cell.terrain !== TERRAIN.ROCK) {
+    showToast('La dinamita solo puede usarse sobre casillas de roca.');
+    setMode(null);
+    return;
+  }
+  if (cell.blasted) {
+    showToast('Esta roca ya fue volada. Ahora podés extraerla.');
+    setMode(null);
+    return;
+  }
+  if (state.consumables.dynamite <= 0) {
+    showToast('No te queda dinamita. Comprá más en la tienda.');
+    setMode(null);
+    return;
+  }
+  if (!spendTick(playExplosionSound)) {
+    showToast('No te quedan ticks este turno.');
+    return;
+  }
+
+  state.consumables.dynamite--;
+  cell.blasted = true;
+  // Semilla fija para que las grietas dibujadas no cambien en cada frame (deterministas por celda)
+  cell.crackSeed = Math.floor(Math.random() * 100000);
+  updateInventoryUI();
+  updateMachinesUI();
+
+  const { x, y } = hexToPixel(cell.q, cell.r);
+  triggerExplosionFx(x, y);
+
+  log(`Volaste la roca en (${cell.q}, ${cell.r}). Ya podés extraerla.`);
+  updateHexInfoPanel(state.playerQ, state.playerR);
+  setMode(null);
+}
+
+// ---------- ESCÁNER DE SUPERFICIE ----------
+// Revela terreno y cantidad de material en un radio de 5 casillas alrededor
+// del jugador, sin necesidad de moverse hasta ahí. No funciona sobre zonas
+// premium todavía no compradas (esas se mantienen ocultas hasta comprarlas).
+const SCANNER_RADIUS = 5;
+
+function tryUseScanner() {
+  if (!state.machines.scanner) {
+    showToast('Necesitás comprar el Escáner de Superficie para usarlo.');
+    return;
+  }
+
+  const cellsInRange = getAllHexesInRadius(state.playerQ, state.playerR, SCANNER_RADIUS);
+  let revealedCount = 0;
+  let oilFound = 0;
+  let oilTotalAmount = 0;
+
+  cellsInRange.forEach(cell => {
+    // Las zonas premium sin comprar no se revelan: mantienen su misterio.
+    if (cell.isPremium && !cell.premiumPurchased) return;
+    cell.scanned = true;
+    revealedCount++;
+    // El petróleo solo se detecta si la roca ya fue explotada y vaciada del
+    // todo (depleted); antes de eso, sigue oculto aunque el hex esté escaneado.
+    if (cell.hasOil && cell.depleted && !cell.oilExtracted) {
+      oilFound++;
+      oilTotalAmount += cell.oilAmount;
+    }
+  });
+
+  playScannerSound();
+  if (oilFound > 0) {
+    showToast(`⚫ El escáner detectó petróleo en ${oilFound} roca(s) ya vaciada(s): ${oilTotalAmount} unidades en total.`);
+  }
+  log(`Escaneaste los alrededores: ${revealedCount} casillas reveladas.`);
+  draw();
+}
+
+// ---------- CAMPAMENTO BASE ----------
+// Coloca el Punto A o el Punto B en la posición actual del jugador. No gasta
+// tick (es una instalación, no una acción de exploración). No se puede
+// colocar el Punto B en la misma casilla que el Punto A.
+function placeCampPoint(which) {
+  const cb = state.campBase;
+  if (!cb.owned) return;
+
+  if (which === 'A') {
+    if (cb.pointA) return;
+    cb.pointA = { q: state.playerQ, r: state.playerR };
+    showToast('Punto A colocado. Ahora movete y colocá el Punto B en otro lugar.');
+    log(`Punto A del campamento colocado en (${cb.pointA.q}, ${cb.pointA.r}).`);
+  } else if (which === 'B') {
+    if (!cb.pointA || cb.pointB) return;
+    if (state.playerQ === cb.pointA.q && state.playerR === cb.pointA.r) {
+      showToast('El Punto B no puede estar en el mismo lugar que el Punto A.');
+      return;
+    }
+    cb.pointB = { q: state.playerQ, r: state.playerR };
+    showToast('Punto B colocado. El campamento ya está listo: entrá a cualquiera de los dos puntos para viajar al otro.');
+    log(`Punto B del campamento colocado en (${cb.pointB.q}, ${cb.pointB.r}).`);
+  }
+
+  updateCampBaseButtons();
+  draw();
+}
+
+// ---------- ZONA DE ACOPIO ----------
+// Coloca el lote comprado en la tienda sobre el hexágono actual del jugador
+// (no se puede colocar en la ciudad). No gasta tick. Una vez colocada, es
+// un punto fijo donde guardar y retirar material sin ocupar el inventario.
+function placeStorageDepot() {
+  const sd = state.storageDepot;
+  if (!sd.owned || sd.placed) return;
+
+  if (isInCity()) {
+    showToast('La Zona de Acopio no se puede colocar en la ciudad.');
+    return;
+  }
+
+  sd.placed = true;
+  sd.q = state.playerQ;
+  sd.r = state.playerR;
+  showToast('Zona de Acopio colocada. Ya podés guardar y retirar material acá.');
+  log(`Zona de Acopio colocada en (${sd.q}, ${sd.r}).`);
+
+  updateStorageDepotButtons();
+  updateDepotSummaryPanel();
+  updateHexInfoPanel(state.playerQ, state.playerR);
+  draw();
+}
+
+function updateStorageDepotButtons() {
+  const btn = document.getElementById('btnPlaceDepot');
+  const sd = state.storageDepot;
+  btn.style.display = (sd.owned && !sd.placed) ? 'flex' : 'none';
+}
+
+// Muestra en un panel flotante, a la izquierda del mapa, cuánto material hay
+// guardado en la Zona de Acopio y cuánta capacidad libre queda, sin
+// necesidad de estar parado ahí. Se ubica justo debajo del panel "Mis cosas".
+function updateDepotSummaryPanel() {
+  const panel = document.getElementById('depotSummaryPanel');
+  const sd = state.storageDepot;
+
+  if (!sd.placed) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  const listEl = document.getElementById('depotSummaryList');
+  const s = sd.stored;
+  listEl.innerHTML = `
+    <div class="row"><span>Roca</span><b>${s.rock}</b></div>
+    <div class="row"><span>Arcilla</span><b>${s.clay}</b></div>
+    <div class="row"><span>Arena</span><b>${s.sand}</b></div>
+    <div class="row"><span>Petróleo</span><b>${s.oil}</b></div>
+  `;
+
+  const total = totalStoredCount();
+  const free = STORAGE_DEPOT_CAPACITY - total;
+  document.getElementById('depotSummaryCap').textContent = `${total} / ${STORAGE_DEPOT_CAPACITY} (libre: ${free})`;
+
+  // Ubica el panel justo debajo de "Mis cosas", sin importar cuánto mida ese panel.
+  const ownedPanel = document.getElementById('ownedItemsPanel');
+  const top = ownedPanel.offsetTop + ownedPanel.offsetHeight + 10;
+  panel.style.top = `${top}px`;
+
+  panel.style.display = 'block';
+}
+
+// ---------- EXTRACTORA DE PETRÓLEO ----------
+// Comprada en la tienda, se instala parado sobre una celda donde el Escáner
+// ya haya detectado petróleo (no gasta tick instalarla). Una vez instalada
+// ahí, "Extraer" saca petróleo de esa celda en vez del material de superficie.
+function installOilExtractor() {
+  if (!state.machines.oilExtractor) return;
+
+  const cell = getCell(state.playerQ, state.playerR);
+  if (!cell.hasOil) {
+    showToast('Acá no hay petróleo detectado. Usá el Escáner sobre una roca ya vaciada.');
+    return;
+  }
+  if (!cell.depleted) {
+    showToast('Primero tenés que volar y extraer toda la roca de esta casilla antes de instalar la extractora.');
+    return;
+  }
+  if (!cell.scanned) {
+    showToast('Primero escaneá esta zona para confirmar que hay petróleo.');
+    return;
+  }
+  if (cell.oilExtracted) {
+    showToast('Ya hay una extractora instalada acá.');
+    return;
+  }
+
+  cell.oilExtracted = true;
+  showToast('Extractora de Petróleo instalada. Ya podés usar "Extraer" acá.');
+  log(`Extractora de petróleo instalada en (${cell.q}, ${cell.r}).`);
+  updateOilExtractorButton();
+  updateHexInfoPanel(state.playerQ, state.playerR);
+  draw();
+}
+
+// Controla la visibilidad del botón de instalar la extractora: solo aparece
+// si el jugador la compró Y está parado sobre una celda con petróleo
+// detectado que todavía no tiene extractora instalada.
+function updateOilExtractorButton() {
+  const btn = document.getElementById('btnInstallOilExtractor');
+  const cell = getCell(state.playerQ, state.playerR);
+  const canInstallHere = state.machines.oilExtractor && cell && cell.hasOil && cell.depleted && cell.scanned && !cell.oilExtracted;
+  btn.style.display = canInstallHere ? 'flex' : 'none';
+}
+
+function isPlayerAtStorageDepot() {
+  const sd = state.storageDepot;
+  return sd.placed && state.playerQ === sd.q && state.playerR === sd.r;
+}
+
+function totalStoredCount() {
+  const s = state.storageDepot.stored;
+  return s.rock + s.sand + s.clay + s.oil;
+}
+
+// Abre el modal de gestión de la Zona de Acopio: una fila por material, con
+// botones para depositar o retirar de a 1 o "todo lo posible".
+function openDepotModal() {
+  if (!isPlayerAtStorageDepot()) return;
+
+  const sd = state.storageDepot;
+  document.getElementById('depotTotalLabel').textContent = totalStoredCount();
+  document.getElementById('depotMaxLabel').textContent = STORAGE_DEPOT_CAPACITY;
+
+  const listEl = document.getElementById('depotList');
+  listEl.innerHTML = '';
+
+  ['rock', 'clay', 'sand', 'oil'].forEach(key => {
+    const label = MATERIAL_LABEL[key];
+    const inInventory = state.inventory[key];
+    const inDepot = sd.stored[key];
+
+    const item = document.createElement('div');
+    item.className = 'depotItem';
+    item.innerHTML = `
+      <div class="depotItemHeader">
+        <span>${label}</span>
+        <span class="depotStoredQty">${inDepot} guardado(s)</span>
+      </div>
+      <div class="depotItemRow">
+        <span>En tu inventario: ${inInventory}</span>
+        <div class="depotBtnGroup">
+          <button class="depotBtn" data-action="deposit1" data-key="${key}" ${inInventory <= 0 ? 'disabled' : ''}>Guardar 1</button>
+          <button class="depotBtn" data-action="depositAll" data-key="${key}" ${inInventory <= 0 ? 'disabled' : ''}>Guardar todo</button>
+        </div>
+      </div>
+      <div class="depotItemRow">
+        <span>Podés retirar</span>
+        <div class="depotBtnGroup">
+          <button class="depotBtn" data-action="withdraw1" data-key="${key}" ${inDepot <= 0 ? 'disabled' : ''}>Retirar 1</button>
+          <button class="depotBtn" data-action="withdrawAll" data-key="${key}" ${inDepot <= 0 ? 'disabled' : ''}>Retirar todo</button>
+        </div>
+      </div>
+    `;
+    listEl.appendChild(item);
+  });
+
+  listEl.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.getAttribute('data-action');
+      const key = btn.getAttribute('data-key');
+      if (action === 'deposit1') depositToDepot(key, 1);
+      else if (action === 'depositAll') depositToDepot(key, state.inventory[key]);
+      else if (action === 'withdraw1') withdrawFromDepot(key, 1);
+      else if (action === 'withdrawAll') withdrawFromDepot(key, state.storageDepot.stored[key]);
+    });
+  });
+
+  document.getElementById('depotOverlay').classList.add('open');
+}
+
+function closeDepotModal() {
+  document.getElementById('depotOverlay').classList.remove('open');
+}
+
+// Mueve unidades del inventario del jugador a la Zona de Acopio, respetando
+// su capacidad máxima total (30) y sin gastar tick (es una gestión local).
+function depositToDepot(key, amount) {
+  const sd = state.storageDepot;
+  const spaceLeft = STORAGE_DEPOT_CAPACITY - totalStoredCount();
+  const actualAmount = Math.min(amount, state.inventory[key], spaceLeft);
+  if (actualAmount <= 0) {
+    if (spaceLeft <= 0) showToast('La Zona de Acopio está llena.');
+    return;
+  }
+
+  state.inventory[key] -= actualAmount;
+  sd.stored[key] += actualAmount;
+  updateInventoryUI();
+  updateDepotSummaryPanel();
+  openDepotModal(); // refresca el modal con las cantidades nuevas
+  draw();
+}
+
+// Mueve unidades de la Zona de Acopio de vuelta al inventario del jugador,
+// respetando el límite de inventario (10).
+function withdrawFromDepot(key, amount) {
+  const sd = state.storageDepot;
+  const spaceLeftInInventory = INVENTORY_LIMIT - totalInventoryCount();
+  const actualAmount = Math.min(amount, sd.stored[key], spaceLeftInInventory);
+  if (actualAmount <= 0) {
+    if (spaceLeftInInventory <= 0) showToast('Tu inventario está lleno.');
+    return;
+  }
+
+  sd.stored[key] -= actualAmount;
+  state.inventory[key] += actualAmount;
+  updateInventoryUI();
+  updateDepotSummaryPanel();
+  openDepotModal(); // refresca el modal con las cantidades nuevas
+  draw();
+}
+
+function updateInventoryUI() {
+  document.getElementById('invRock').textContent = state.inventory.rock;
+  document.getElementById('invSand').textContent = state.inventory.sand;
+  document.getElementById('invClay').textContent = state.inventory.clay;
+  document.getElementById('invOil').textContent = state.inventory.oil;
+  document.getElementById('coinsAmount').textContent = state.coins;
+  document.getElementById('dynamiteCountLabel').textContent = `(${state.consumables.dynamite})`;
+  document.getElementById('invTotal').textContent = totalInventoryCount();
+  document.getElementById('invMax').textContent = INVENTORY_LIMIT;
+}
+
+function updateMachinesUI() {
+  const listEl = document.getElementById('ownedItemsList');
+  const ownedMachineKeys = Object.keys(state.machines).filter(k => state.machines[k]);
+  const hasDynamite = state.consumables.dynamite > 0;
+
+  if (ownedMachineKeys.length === 0 && !hasDynamite) {
+    listEl.innerHTML = '<div class="soon" id="noOwnedItemsMsg">Todavía no compraste nada.</div>';
+    return;
+  }
+
+  let rows = '';
+
+  // Maquinaria (compra única, sin cantidad)
+  rows += ownedMachineKeys.map(key => {
+    const m = MACHINES[key];
+    return `<div class="ownedItemRow"><span class="ownedItemName"><span class="ic">${m.icon}</span>${m.name}</span></div>`;
+  }).join('');
+
+  // Dinamita (consumible, muestra cantidad disponible)
+  if (hasDynamite) {
+    const c = CONSUMABLES.dynamite;
+    rows += `<div class="ownedItemRow"><span class="ownedItemName"><span class="ic">${c.icon}</span>${c.name}</span><span class="ownedItemQty">x${state.consumables.dynamite}</span></div>`;
+  }
+
+  listEl.innerHTML = rows;
+
+  // El botón "Escanear alrededores" solo se muestra si ya se compró el escáner.
+  const scanBtn = document.getElementById('btnScanner');
+  scanBtn.style.display = state.machines.scanner ? 'flex' : 'none';
+
+  updateCampBaseButtons();
+  updateStorageDepotButtons();
+  updateDepotSummaryPanel(); // recalcula la posición por si "Mis cosas" cambió de altura
+}
+
+// Controla la visibilidad de los botones de colocar Punto A / Punto B del
+// Campamento Base, según cuáles ya estén colocados.
+function updateCampBaseButtons() {
+  const btnA = document.getElementById('btnPlaceCampA');
+  const btnB = document.getElementById('btnPlaceCampB');
+  const cb = state.campBase;
+
+  btnA.style.display = (cb.owned && !cb.pointA) ? 'flex' : 'none';
+  btnB.style.display = (cb.owned && cb.pointA && !cb.pointB) ? 'flex' : 'none';
+}
+
+// Genera el atributo "points" de un hexágono flat-top centrado en (20,20) para el SVG del panel.
+function hexSwatchPoints() {
+  const cx = 20, cy = 20, r = 18;
+  const pts = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = Math.PI / 180 * (60 * i);
+    pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+  }
+  return pts.join(' ');
+}
+
+function updateHexInfoPanel(q, r) {
+  const cell = getCell(q, r);
+  let terrainLabel = TERRAIN_LABEL[cell.terrain];
+  const playerIsHere = (q === state.playerQ && r === state.playerR);
+  // La cantidad de material solo se conoce si esa celda ya fue revelada por
+  // el Escáner de Superficie (comprado y usado ahí). Sin escanear, ni parado
+  // encima se sabe cuánto hay — solo el tipo de terreno.
+  const knowsAmount = cell.scanned;
+
+  if (cell.isPremium && !cell.premiumPurchased) {
+    terrainLabel += ' (zona por comprar)';
+  } else if (cell.terrain === TERRAIN.ROCK && !cell.blasted) {
+    terrainLabel += ' (sin volar)';
+  } else if (EXTRACTABLE[cell.terrain]) {
+    if (cell.depleted) {
+      terrainLabel += ' (agotado)';
+    } else if (knowsAmount) {
+      terrainLabel += ` (${cell.resourceAmount} disp.)`;
+    }
+    // Si no se conoce la cantidad, se deja el nombre del terreno solo, sin número.
+  }
+  document.getElementById('currentHexLabel').textContent = terrainLabel;
+
+  const shape = document.getElementById('currentHexSwatchShape');
+  shape.setAttribute('points', hexSwatchPoints());
+  shape.setAttribute('fill', fillColorForTerrain(cell));
+
+  // El botón de comprar zona premium solo aparece si el jugador está PARADO
+  // en esa casilla (no alcanza con haberla clickeado para mirar información).
+  const buyBtn = document.getElementById('btnBuyPremiumZone');
+  if (playerIsHere && cell.isPremium && !cell.premiumPurchased) {
+    buyBtn.textContent = `Comprar por $${cell.premiumPrice}`;
+    buyBtn.style.display = 'inline-block';
+  } else {
+    buyBtn.style.display = 'none';
+  }
+
+  // El botón de teletransportar solo aparece si el jugador está parado en el
+  // Punto A o el Punto B del Campamento Base, con ambos ya colocados.
+  const teleportBtn = document.getElementById('btnCampTeleport');
+  const { pointA, pointB } = state.campBase;
+  const onCampPoint = pointA && pointB && playerIsHere && (
+    (q === pointA.q && r === pointA.r) || (q === pointB.q && r === pointB.r)
+  );
+  teleportBtn.style.display = onCampPoint ? 'inline-block' : 'none';
+
+  // El botón de gestionar la Zona de Acopio solo aparece si el jugador está
+  // parado exactamente donde fue colocada.
+  const depotBtn = document.getElementById('btnOpenDepot');
+  depotBtn.style.display = (playerIsHere && isPlayerAtStorageDepot()) ? 'inline-block' : 'none';
+
+  if (playerIsHere) updateOilExtractorButton();
+
+  updateSellButtonState();
+  updateBuyButtonState();
+}
+
+// ---------- CIUDAD Y VENTA ----------
+// En la ciudad: vender siempre toma material del inventario del jugador.
+// Con la volqueta, fuera de la ciudad: la venta ya NO toma del inventario,
+// sino del material guardado en la Zona de Acopio. La volqueta necesita que
+// exista una Zona de Acopio colocada para poder usarse.
+function isInCity() {
+  const cell = getCell(state.playerQ, state.playerR);
+  return cell && cell.terrain === TERRAIN.CITY;
+}
+
+function canSell() {
+  if (isInCity()) return true;
+  return state.machines.dumpTruck && state.storageDepot.placed;
+}
+
+function updateSellButtonState() {
+  const btn = document.getElementById('btnVender');
+  const inCity = isInCity();
+  const hasDumpTruck = state.machines.dumpTruck;
+  const hasDepot = state.storageDepot.placed;
+
+  btn.classList.toggle('disabled', !canSell());
+
+  if (inCity) {
+    btn.title = 'Vender tu material acá en la ciudad';
+  } else if (hasDumpTruck && hasDepot) {
+    btn.title = 'Vender el material guardado en la Zona de Acopio (gasta 2 ticks: ida y vuelta)';
+  } else if (hasDumpTruck && !hasDepot) {
+    btn.title = 'La volqueta necesita una Zona de Acopio colocada para poder vender';
+  } else {
+    btn.title = 'Solo podés vender cuando estás en la ciudad (o comprá la volqueta + Zona de Acopio)';
+  }
+}
+
+// El botón "Comprar" solo funciona estando en la ciudad (maquinaria y
+// consumibles se consiguen ahí, no en cualquier lugar del mapa).
+function updateBuyButtonState() {
+  const btn = document.getElementById('btnComprar');
+  const inCity = isInCity();
+  btn.classList.toggle('disabled', !inCity);
+  btn.title = inCity
+    ? 'Comprar maquinaria y consumibles'
+    : 'Solo podés comprar estando en la ciudad';
+}
+
+function endTurn() {
+  // Si el juego ya terminó, no se puede seguir avanzando turnos.
+  if (state.gameOver) return;
+
+  // Alterna entre turno Día y turno Noche. El contador de "Día" solo avanza
+  // cuando termina la Noche y vuelve a empezar un nuevo Día.
+  if (state.isDayTime) {
+    state.isDayTime = false;
+    // La Torre de Luz solo da su bonus si ya estaba comprada AL EMPEZAR esta
+    // noche; si se compra a mitad de la noche, el bonus llega recién la próxima.
+    state.lightTowerActiveThisNight = state.machines.machine5;
+    log('— Cae la noche. —');
+
+    // La lluvia cae de noche, una sola vez en toda la partida, el día indicado.
+    if (state.day === RAIN_DAY && !state.hasRainedYet) {
+      triggerRain();
+    } else {
+      state.isRainingNow = false;
+    }
+  } else {
+    state.isDayTime = true;
+    state.day++;
+    log(`— Día ${state.day} comenzó. —`);
+    state.isRainingNow = false;
+
+    // Se secan la arena y arcilla mojadas al llegar el día indicado.
+    if (state.day === DRY_DAY) {
+      dryOutWetTerrain();
     }
 
-    if (z.esperandoPuertaDesde) {
-        const progreso = Math.min((Date.now() - z.esperandoPuertaDesde) / ZOMBIE_TIEMPO_ABRIR_PUERTA, 1);
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(cx - 14, cy - 32, 28, 4);
-        ctx.fillStyle = '#ff6b6b';
-        ctx.fillRect(cx - 14, cy - 32, 28 * progreso, 4);
+    // Fin de la partida al llegar al día final.
+    if (state.day >= TOTAL_GAME_DAYS) {
+      endGame();
+      return;
     }
+  }
+
+  state.ticksLeft = getMaxTicksForCurrentTurn();
+  setMode(null);
+  updateTicksUI();
+  updateMapLighting();
+  draw();
 }
 
-function dibujarBalas() {
-    ctx.fillStyle = 'yellow';
-    for (const b of bullets) {
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, BULLET_RADIUS, 0, Math.PI * 2);
-        ctx.fill();
+// ---------- LLUVIA (día 5, una sola vez) ----------
+function triggerRain() {
+  state.hasRainedYet = true;
+  state.isRainingNow = true;
+  log('— Empieza a llover. La arena y la arcilla se mojan. —');
+
+  // Moja todos los hexágonos de arena y arcilla que todavía tengan recurso.
+  for (const cell of state.grid.values()) {
+    if ((cell.terrain === TERRAIN.SAND || cell.terrain === TERRAIN.CLAY) && !cell.depleted) {
+      cell.wet = true;
     }
-}
+  }
 
-function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    dibujarFondo();
-    dibujarLaberinto();
-    dibujarPuertas();
-    dibujarCajasMunicion();
-    dibujarCajasReparacion();
-    dibujarBalas();
-    for (const z of zombies) dibujarZombie(z);
-    dibujarJugadores();
-}
-
-// ==================== GAME LOOP ====================
-function iniciarGameLoop() {
-    actualizarHud();
-    requestAnimationFrame(bucleJuego);
-}
-
-function bucleJuego() {
-    if (!gameOver && !victory) {
-        manejarInput();
-        if (esHost) actualizarZombiesComoHost();
-        actualizarBalas();
-        verificarCajasMunicion();
-        actualizarReparacion();
-        verificarColisiones();
-        actualizarTiempoHud();
-        verificarVictoria();
-        publicarMiEstadoRapido();
+  // Cada casilla de agua existente suma una casilla de agua nueva adyacente,
+  // reemplazando vegetación (nunca roca, arena o arcilla).
+  const newWaterCells = [];
+  for (const cell of state.grid.values()) {
+    if (cell.terrain !== TERRAIN.WATER) continue;
+    const neighbors = getNeighbors(cell.q, cell.r);
+    for (const n of neighbors) {
+      const nc = getCell(n.q, n.r);
+      if (nc && nc.terrain === TERRAIN.GRASS) {
+        newWaterCells.push(nc);
+        break; // una sola casilla nueva por cada agua existente
+      }
     }
-    render();
-    requestAnimationFrame(bucleJuego);
+  }
+  newWaterCells.forEach(c => {
+    c.terrain = TERRAIN.WATER;
+    c.resourceAmount = 0;
+  });
+
+  showRainOverlay();
 }
 
-// Publicacion rapida de solo posicion en cada frame se reemplaza por el
-// setInterval de arriba (66ms) para no saturar Firebase; esta funcion
-// queda como no-op intencional por claridad del flujo del game loop.
-function publicarMiEstadoRapido() {}
+// Muestra el efecto visual de lluvia (gotas animadas) durante unos segundos.
+// El bloqueo real de las casillas mojadas dura hasta el día de secado; esto
+// es solo la animación que anuncia que empezó a llover.
+function showRainOverlay() {
+  const overlay = document.getElementById('rainOverlay');
+  overlay.innerHTML = '';
 
-inicializarLogin();
+  const dropCount = 60;
+  for (let i = 0; i < dropCount; i++) {
+    const drop = document.createElement('div');
+    drop.className = 'raindrop';
+    drop.style.left = `${Math.random() * 100}%`;
+    drop.style.animationDuration = `${0.6 + Math.random() * 0.6}s`;
+    drop.style.animationDelay = `${Math.random() * 1.5}s`;
+    overlay.appendChild(drop);
+  }
+
+  const banner = document.createElement('div');
+  banner.id = 'rainBanner';
+  banner.textContent = '🌧️ Está lloviendo: la arena y la arcilla se mojaron.';
+  overlay.appendChild(banner);
+
+  overlay.classList.add('active');
+  playRainSound();
+
+  // El efecto visual (gotas + aviso) dura unos segundos; el mojado real de
+  // las casillas queda hasta que se sequen en el día correspondiente.
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    state.isRainingNow = false;
+  }, 5000);
+}
+
+function dryOutWetTerrain() {
+  let dried = 0;
+  for (const cell of state.grid.values()) {
+    if (cell.wet) {
+      cell.wet = false;
+      dried++;
+    }
+  }
+  if (dried > 0) log(`— El sol secó la arena y la arcilla mojadas. —`);
+}
+
+// ---------- FIN DE JUEGO ----------
+function endGame() {
+  state.gameOver = true;
+  state.ticksLeft = 0;
+  setMode(null);
+  updateTicksUI();
+  showGameOverScreen();
+}
+
+// Muestra la pantalla final con un resumen simple de la partida.
+function showGameOverScreen() {
+  const statsEl = document.getElementById('gameOverStats');
+  const machinesOwned = Object.keys(state.machines).filter(k => state.machines[k]).length;
+
+  statsEl.innerHTML = `
+    <div class="row"><span>Monedas finales</span><b>💰${state.coins}</b></div>
+    <div class="row"><span>Material en inventario</span><b>${totalInventoryCount()}</b></div>
+    <div class="row"><span>Maquinaria comprada</span><b>${machinesOwned}</b></div>
+  `;
+
+  document.getElementById('gameOverOverlay').classList.add('open');
+}
+
+// ---------- VENDER ----------
+// En la ciudad, vender es instantáneo (no gasta tick) y toma del inventario
+// del jugador. Fuera de la ciudad, con la volqueta, la venta toma del
+// material guardado en la Zona de Acopio (no del inventario personal) y
+// gasta 2 ticks (ida y vuelta), simulando el viaje del camión hasta ahí.
+function getSellSource() {
+  return isInCity() ? state.inventory : state.storageDepot.stored;
+}
+
+function calcSellTotal() {
+  const source = getSellSource();
+  return Object.keys(SELL_PRICE).reduce(
+    (sum, key) => sum + source[key] * SELL_PRICE[key], 0
+  );
+}
+
+function openSellModal() {
+  const listEl = document.getElementById('sellList');
+  listEl.innerHTML = '';
+
+  const source = getSellSource();
+  const materials = ['rock', 'clay', 'sand', 'oil'];
+  let hasAnything = false;
+
+  materials.forEach(key => {
+    const qty = source[key];
+    const price = SELL_PRICE[key];
+    if (qty > 0) hasAnything = true;
+
+    const row = document.createElement('div');
+    row.className = 'sellItem' + (qty === 0 ? ' empty' : '');
+    row.innerHTML = `
+      <div class="sellItemName">${MATERIAL_LABEL[key]}
+        <small>${qty} u. × 💲${price}</small>
+      </div>
+      <div class="sellItemSub">💰${qty * price}</div>
+    `;
+    listEl.appendChild(row);
+  });
+
+  const total = calcSellTotal();
+  document.getElementById('sellTotal').textContent = `💰 ${total}`;
+
+  // Aviso de ticks por viaje (ida y vuelta) y de dónde sale el material vendido
+  const travelNoteEl = document.getElementById('sellTravelNote');
+  if (!isInCity() && state.machines.dumpTruck) {
+    travelNoteEl.textContent = '🚛 Vendiendo con la volqueta desde la Zona de Acopio: esta venta gastará 2 ticks (ida y vuelta).';
+    travelNoteEl.style.display = 'block';
+  } else {
+    travelNoteEl.style.display = 'none';
+  }
+
+  const confirmBtn = document.getElementById('sellConfirmBtn');
+  const needsTravelTicks = !isInCity() && state.machines.dumpTruck;
+  confirmBtn.disabled = !hasAnything || (needsTravelTicks && state.ticksLeft < 2);
+
+  document.getElementById('sellModalOverlay').classList.add('open');
+}
+
+function closeSellModal() {
+  document.getElementById('sellModalOverlay').classList.remove('open');
+}
+
+function confirmSellAll() {
+  const total = calcSellTotal();
+  if (total <= 0) { closeSellModal(); return; }
+
+  // Fuera de la ciudad, vender con la volqueta gasta 2 ticks: uno de ida y otro de vuelta.
+  const needsTravelTicks = !isInCity() && state.machines.dumpTruck;
+  if (needsTravelTicks) {
+    if (state.ticksLeft < 2) {
+      showToast('Necesitás 2 ticks para el viaje de ida y vuelta de la volqueta.');
+      return;
+    }
+    spendTick(playSellSound); // tick de ida
+    spendTick(playSellSound); // tick de vuelta
+  }
+
+  const source = getSellSource();
+  const soldSummary = [];
+  ['rock', 'clay', 'sand', 'oil'].forEach(key => {
+    if (source[key] > 0) {
+      soldSummary.push(`${source[key]} de ${MATERIAL_LABEL[key].toLowerCase()}`);
+      source[key] = 0;
+    }
+  });
+
+  state.coins += total;
+  updateInventoryUI();
+  updateDepotSummaryPanel();
+  if (!needsTravelTicks) playSellSound(); // si ya sonó por los spendTick, no duplicar
+  log(`Vendiste ${soldSummary.join(', ')} por un total de 💰${total}.`);
+  closeSellModal();
+}
+
+// ---------- COMPRAR ZONA PREMIUM ----------
+// Comprar una zona premium cuesta 1 tick + su precio en monedas. Una vez
+// comprada, queda desbloqueada para siempre (como cualquier otro hex).
+function openPremiumBuyModal() {
+  const cell = getCell(state.playerQ, state.playerR);
+  if (!cell || !cell.isPremium || cell.premiumPurchased) return;
+
+  document.getElementById('premiumBuyTitle').textContent =
+    `Comprar zona de ${TERRAIN_LABEL[cell.terrain].toLowerCase()}`;
+  document.getElementById('premiumBuyDesc').innerHTML =
+    `No se sabe cuánto material hay hasta comprarla. ` +
+    `Comprarla cuesta <b>💰${cell.premiumPrice}</b> y <b>1 tick</b>. Una vez comprada es tuya para siempre.`;
+
+  const confirmBtn = document.getElementById('premiumBuyConfirmBtn');
+  confirmBtn.disabled = state.coins < cell.premiumPrice || state.ticksLeft < 1;
+
+  document.getElementById('premiumBuyOverlay').classList.add('open');
+}
+
+function closePremiumBuyModal() {
+  document.getElementById('premiumBuyOverlay').classList.remove('open');
+}
+
+function confirmPremiumBuy() {
+  const cell = getCell(state.playerQ, state.playerR);
+  if (!cell || !cell.isPremium || cell.premiumPurchased) { closePremiumBuyModal(); return; }
+
+  if (state.coins < cell.premiumPrice) {
+    showToast('No te alcanzan las monedas para comprar esta zona.');
+    return;
+  }
+  if (!spendTick(playBuySound)) {
+    showToast('No te quedan ticks este turno.');
+    return;
+  }
+
+  state.coins -= cell.premiumPrice;
+  cell.premiumPurchased = true;
+  updateInventoryUI();
+  log(`Compraste la zona de ${TERRAIN_LABEL[cell.terrain].toLowerCase()} por 💰${cell.premiumPrice}.`);
+  closePremiumBuyModal();
+  updateHexInfoPanel(state.playerQ, state.playerR);
+  draw();
+}
+
+// ---------- COMPRAR MAQUINARIA ----------
+function openBuyModal() {
+  const listEl = document.getElementById('buyList');
+  listEl.innerHTML = '';
+
+  // --- Sección de consumibles (dinamita, etc.) ---
+  Object.keys(CONSUMABLES).forEach(key => {
+    const c = CONSUMABLES[key];
+    const canAfford = state.coins >= c.price;
+    const owned = state.consumables[key] || 0;
+
+    const item = document.createElement('div');
+    item.className = 'buyItem' + (!c.available ? ' locked' : '');
+
+    const btnHtml = c.available
+      ? `<button class="buyItemBtn" data-consumable="${key}" ${canAfford ? '' : 'disabled'}>Comprar 1 unidad</button>`
+      : `<button class="buyItemBtn" disabled>Próximamente</button>`;
+
+    item.innerHTML = `
+      <div class="buyItemIcon">${c.icon}</div>
+      <div class="buyItemBody">
+        <div class="buyItemName">
+          <span>${c.name} <span class="priceTag">(tenés: ${owned})</span></span>
+          ${c.available ? `<span class="buyItemPrice">💰${c.price}</span>` : ''}
+        </div>
+        <div class="buyItemDesc">${c.desc}</div>
+        ${btnHtml}
+      </div>
+    `;
+    listEl.appendChild(item);
+  });
+
+  // --- Sección de maquinaria (compra única) ---
+  Object.keys(MACHINES).forEach(key => {
+    const m = MACHINES[key];
+    const owned = state.machines[key];
+    const canAfford = state.coins >= m.price;
+
+    const item = document.createElement('div');
+    item.className = 'buyItem' + (!m.available ? ' locked' : '');
+
+    let btnHtml;
+    if (!m.available) {
+      btnHtml = `<button class="buyItemBtn" disabled>Próximamente</button>`;
+    } else if (owned) {
+      btnHtml = `<button class="buyItemBtn owned" disabled>✓ Adquirida</button>`;
+    } else {
+      btnHtml = `<button class="buyItemBtn" data-machine="${key}" ${canAfford ? '' : 'disabled'}>Comprar</button>`;
+    }
+
+    item.innerHTML = `
+      <div class="buyItemIcon">${m.icon}</div>
+      <div class="buyItemBody">
+        <div class="buyItemName">
+          <span>${m.name}</span>
+          ${m.available ? `<span class="buyItemPrice">💰${m.price}</span>` : ''}
+        </div>
+        <div class="buyItemDesc">${m.desc}</div>
+        ${btnHtml}
+      </div>
+    `;
+    listEl.appendChild(item);
+  });
+
+  // Enganchar los botones de compra recién creados
+  listEl.querySelectorAll('button[data-machine]').forEach(btn => {
+    btn.addEventListener('click', () => buyMachine(btn.getAttribute('data-machine')));
+  });
+  listEl.querySelectorAll('button[data-consumable]').forEach(btn => {
+    btn.addEventListener('click', () => buyConsumable(btn.getAttribute('data-consumable')));
+  });
+
+  document.getElementById('buyModalOverlay').classList.add('open');
+}
+
+function closeBuyModal() {
+  document.getElementById('buyModalOverlay').classList.remove('open');
+}
+
+function buyConsumable(key) {
+  const c = CONSUMABLES[key];
+  if (!c || !c.available) return;
+  if (state.coins < c.price) {
+    log('No te alcanzan las monedas para eso.', true);
+    return;
+  }
+
+  state.coins -= c.price;
+  state.consumables[key] = (state.consumables[key] || 0) + 1;
+  updateInventoryUI();
+  updateMachinesUI();
+  playBuySound();
+  log(`Compraste 1 unidad de ${c.name.toLowerCase()}.`);
+  openBuyModal(); // refresca el modal con la cantidad actualizada
+}
+
+function buyMachine(key) {
+  const m = MACHINES[key];
+  if (!m || !m.available || state.machines[key]) return;
+  if (state.coins < m.price) {
+    log('No te alcanzan las monedas para esa maquinaria.', true);
+    return;
+  }
+
+  state.coins -= m.price;
+  state.machines[key] = true;
+
+  // El Campamento Base habilita el flujo de colocar Punto A y Punto B.
+  if (key === 'campBase') {
+    state.campBase.owned = true;
+  }
+
+  // La Zona de Acopio habilita el flujo de colocar el lote en el mapa.
+  if (key === 'storageDepot') {
+    state.storageDepot.owned = true;
+  }
+
+  updateInventoryUI();
+  updateMachinesUI();
+  updateSellButtonState(); // por si la compra fue la volqueta: habilita vender en cualquier lado
+  updateCampBaseButtons();
+  updateStorageDepotButtons();
+  updateOilExtractorButton();
+  playBuySound();
+  log(`Compraste: ${m.name}.`);
+  openBuyModal(); // refresca el modal para mostrar "Adquirida"
+}
+
+// ---------- BOTONES ----------
+document.getElementById('btnDesplazar').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  if (state.ticksLeft <= 0) { log('No te quedan ticks.', true); return; }
+  setMode(state.mode === 'move' ? null : 'move');
+});
+
+document.getElementById('btnExtraer').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  if (state.ticksLeft <= 0) { log('No te quedan ticks.', true); return; }
+  tryExtract();
+});
+
+document.getElementById('btnVender').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  if (!canSell()) {
+    showToast('Solo podés vender cuando estás en la ciudad (o comprá la volqueta).');
+    return;
+  }
+  openSellModal();
+});
+
+document.getElementById('btnComprar').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  if (!isInCity()) {
+    showToast('Solo podés comprar maquinaria estando en la ciudad.');
+    return;
+  }
+  openBuyModal();
+});
+
+document.getElementById('btnDinamita').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  if (state.ticksLeft <= 0) { showToast('No te quedan ticks este turno.'); return; }
+  tryUseDynamite();
+});
+
+document.getElementById('btnScanner').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  tryUseScanner();
+});
+
+document.getElementById('btnPlaceCampA').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  placeCampPoint('A');
+});
+
+document.getElementById('btnPlaceCampB').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  placeCampPoint('B');
+});
+
+document.getElementById('btnPlaceDepot').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  placeStorageDepot();
+});
+
+document.getElementById('btnInstallOilExtractor').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  installOilExtractor();
+});
+
+document.getElementById('btnBuyPremiumZone').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  openPremiumBuyModal();
+});
+
+document.getElementById('btnCampTeleport').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  useCampBaseTeleport();
+});
+
+document.getElementById('btnOpenDepot').addEventListener('click', () => {
+  ensureAudioCtx();
+  if (state.gameOver) return;
+  openDepotModal();
+});
+document.getElementById('depotCloseX').addEventListener('click', closeDepotModal);
+document.getElementById('depotOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'depotOverlay') closeDepotModal();
+});
+
+document.getElementById('premiumBuyCancelBtn').addEventListener('click', closePremiumBuyModal);
+document.getElementById('premiumBuyConfirmBtn').addEventListener('click', confirmPremiumBuy);
+document.getElementById('premiumBuyOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'premiumBuyOverlay') closePremiumBuyModal();
+});
+
+document.getElementById('sellCancelBtn').addEventListener('click', closeSellModal);
+document.getElementById('sellConfirmBtn').addEventListener('click', confirmSellAll);
+document.getElementById('sellModalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'sellModalOverlay') closeSellModal();
+});
+
+document.getElementById('buyCancelBtn').addEventListener('click', closeBuyModal);
+document.getElementById('buyCloseX').addEventListener('click', closeBuyModal);
+
+// ---------- OPCIONES (volumen) ----------
+document.getElementById('btnSettings').addEventListener('click', () => {
+  document.getElementById('settingsOverlay').classList.add('open');
+});
+document.getElementById('settingsCloseX').addEventListener('click', () => {
+  document.getElementById('settingsOverlay').classList.remove('open');
+});
+document.getElementById('settingsOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'settingsOverlay') document.getElementById('settingsOverlay').classList.remove('open');
+});
+document.getElementById('volumeSlider').addEventListener('input', (e) => {
+  const pct = Number(e.target.value);
+  state.settings.volume = pct / 100;
+  document.getElementById('volumeValue').textContent = `${pct}%`;
+  if (masterGain) masterGain.gain.value = state.settings.volume;
+});
+
+document.getElementById('buyModalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'buyModalOverlay') closeBuyModal();
+});
+
+// El turno ya no requiere confirmación manual: avanza solo cuando se
+// agotan los ticks (ver scheduleAutoEndTurn).
+
+// ---------- INICIALIZACIÓN ----------
+function findSpawnPoint() {
+  // El jugador arranca directamente en la ciudad central (0,0).
+  const center = getCell(0, 0);
+  if (center && center.terrain === TERRAIN.CITY) return { q: 0, r: 0 };
+
+  for (const cell of state.grid.values()) {
+    if (cell.terrain === TERRAIN.GRASS) return { q: cell.q, r: cell.r };
+  }
+  return { q: 0, r: 0 };
+}
+
+// ---------- CRONÓMETRO DE JUEGO ----------
+// Solo informativo: cuenta el tiempo transcurrido desde que se abrió la partida.
+let gameStartTime = null;
+function startGameTimer() {
+  gameStartTime = performance.now();
+  setInterval(updateTimerDisplay, 1000);
+}
+function updateTimerDisplay() {
+  if (gameStartTime === null) return;
+  const elapsedSec = Math.floor((performance.now() - gameStartTime) / 1000);
+  const mins = Math.floor(elapsedSec / 60).toString().padStart(2, '0');
+  const secs = (elapsedSec % 60).toString().padStart(2, '0');
+  document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+}
+
+function init() {
+  generateMap();
+
+  const spawn = findSpawnPoint();
+  state.playerQ = spawn.q;
+  state.playerR = spawn.r;
+  // El hex inicial ya es la ciudad (transitable) gracias a generateMap(); no se sobreescribe.
+
+  resizeCanvas();
+  centerCameraOnPlayer();
+  updateTicksUI();
+  updateInventoryUI();
+  updateMachinesUI();
+  updateDepotSummaryPanel();
+  updateHexInfoPanel(state.playerQ, state.playerR);
+  updateMapLighting();
+  updatePlayerBadge();
+  log('Partida iniciada. Elegí "Desplazar" o "Extraer" para actuar.');
+  draw();
+}
+
+// ---------- PANTALLA DE BIENVENIDA (nombre + color del cubito) ----------
+const PLAYER_COLOR_OPTIONS = [
+  '#f7cf63', '#57c785', '#5aa7d8', '#e0433c',
+  '#e0a458', '#9678ff', '#ff7ab6', '#d9d9d9',
+  '#4ecdc4', '#ff9f5a', '#7bd389', '#c77dff',
+];
+
+function buildWelcomeColorGrid() {
+  const grid = document.getElementById('welcomeColorGrid');
+  grid.innerHTML = '';
+  PLAYER_COLOR_OPTIONS.forEach(color => {
+    const sw = document.createElement('div');
+    sw.className = 'welcomeColorSwatch';
+    sw.style.background = color;
+    sw.dataset.color = color;
+    if (color === state.playerColor) sw.classList.add('selected');
+    sw.addEventListener('click', () => {
+      state.playerColor = color;
+      grid.querySelectorAll('.welcomeColorSwatch').forEach(el => el.classList.remove('selected'));
+      sw.classList.add('selected');
+    });
+    grid.appendChild(sw);
+  });
+}
+
+// Actualiza el cubito+nombre que aparece en la barra superior para
+// distinguir al jugador de un vistazo.
+function updatePlayerBadge() {
+  document.getElementById('playerBadgeName').textContent = state.playerName;
+  const shape = document.getElementById('playerBadgeShape');
+  shape.setAttribute('fill', state.playerColor);
+}
+
+function startGameAfterWelcome() {
+  const nameInput = document.getElementById('welcomeNameInput');
+  const typedName = nameInput.value.trim();
+  state.playerName = typedName || 'Jugador';
+
+  document.getElementById('welcomeOverlay').style.display = 'none';
+  updatePlayerBadge();
+  startGameTimer();
+}
+
+buildWelcomeColorGrid();
+document.getElementById('btnStartGame').addEventListener('click', startGameAfterWelcome);
+document.getElementById('welcomeNameInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') startGameAfterWelcome();
+});
+
+init();
 </script>
-
 </body>
 </html>
